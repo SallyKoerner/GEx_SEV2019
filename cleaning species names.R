@@ -1,7 +1,7 @@
-### Merge species names to get tnrs names
-### Authors: Kevin Wilcox (kevin.wilcox@uwyo.edu), Sally Koerner (sally.koerner@uncg.edu)
+### Merge species names to get tnrs names and select last year of data and greatest exage only
+### Authors: Kevin Wilcox (kevin.wilcox@uwyo.edu)
 ###
-### Created April 9, 2019; Last updated: April 9, 2019
+### Created April 22, 2019; Last updated: April 22, 2019
 
 ### Set up workspace
 rm(list=ls())
@@ -11,7 +11,6 @@ library(tidyverse)
 ### Import data
 relcov_full <- read.csv("ALL_Cleaned_Apr2019.csv")
 spname_key <- read.csv()
-
 
 ### Merge TNRS names with names in GEx dataset
 relcov_tnrs_names <- relcov_full %>%
