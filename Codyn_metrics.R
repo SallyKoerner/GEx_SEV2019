@@ -1,5 +1,6 @@
 library(tidyverse)
 library(codyn)
+library(rsq)
 
 setwd("~/Dropbox/Dominance WG/")
 
@@ -83,7 +84,6 @@ gex_multdiff_all<-gex_multdiff %>%
 write.csv(gex_multdiff_all, "gex_multdiff_all.csv", row.names = F)
 
 gex_multdiff_ave<-gex_multdiff_all%>%
-  separate(site_block, into=c("site", "block"), sep="##") %>% 
   group_by(site) %>% 
   summarize(composition_diff=mean(composition_diff))
 
@@ -104,15 +104,26 @@ ci<-se*1.96
 site<-"All Sites"
 
 all<- data.frame(site, mean, sd, se, ci)
+
+
+gex_multdiff_CI <- gex_multdiff_CI[order(gex_multdiff_CI$mean), ]  # sort
 gex_multdiff_CI2<-gex_multdiff_CI%>%
-  bind_rows(all)
+  bind_rows(all)%>%
+  mutate(colortrt=ifelse(site=="All Sites", 1,0))
+gex_multdiff_CI2$site2 <- factor(gex_multdiff_CI2$site, levels = gex_multdiff_CI2$site)
 
-
-ggplot(data=gex_multdiff_CI2, aes(x=as.factor(site), y=mean))+
-  geom_point()+
+theme_set(theme_bw(12))
+ggplot(data=gex_multdiff_CI2, aes(x=site2, y=mean, color=as.factor(colortrt)))+
+  geom_point(stat="identity")+
+  scale_color_manual(values=c("black", "red"))+
   geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci))+
   coord_flip()+
-  geom_hline(yintercept = 0.25)
+  geom_hline(yintercept = 0.25)+
+  xlab("Site")+
+  ylab("Compositional Difference")+
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.position = "none")
 
 ###doing RAC differences
 
@@ -167,7 +178,7 @@ gex_RACdiff_ave<-gex_RACdiff_all%>%
   group_by(site) %>% 
   summarize_at(vars(richness_diff, evenness_diff, rank_diff, species_diff), funs(mean))
 
-write.csv(gex_multdiff_ave, "gex_RACdiff_ave.csv", row.names = F)
+write.csv(gex_RACdiff_ave, "gex_RACdiff_ave.csv", row.names = F)
 
 ###doing abundance differences
 
@@ -224,6 +235,59 @@ gex_abunddiff_ave<-gex_abunddiff_all%>%
 
 write.csv(gex_abunddiff_ave, "gex_abund_diff_ave.csv", row.names = F)
 
-###doing a multiple regression, what is driving comp change
-comprac<-
+###doing a multiple regression, what is driving comp diff?
+comprac<-gex_multdiff_ave%>%
+  left_join(gex_RACdiff_ave)%>%
+  mutate(abs_rich=abs(richness_diff),
+         abs_even=abs(evenness_diff))%>%
+  select(-richness_diff, -evenness_diff)
+
+summary(m1<-lm(composition_diff~abs_rich+abs_even+rank_diff+species_diff, data=comprac))
+rsq.partial(m1)
+
+comprac2<-comprac %>% 
+  na.omit()
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...){
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- cor(x, y)
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  test <- cor.test(x,y) 
+  Signif <- symnum(test$p.value, corr = FALSE, na = FALSE, 
+                   cutpoints = c(0, 0.001, 1),
+                   symbols = c("*", " "))
   
+  
+  text(0.5, 0.5, txt, cex = 2)
+  text(0.8, 0.5, Signif, cex=5, col="red")
+}
+pairs(comprac2[,c(2, 5, 6, 3, 4)], pch = 21, labels=c("Compositional\nDiff","Abs. Richness\nDiff", "Abs. Evenness\nDiff","Rank\nDiff","Species\nDiff"), font.labels=1, cex.labels=2,upper.panel=panel.cor)
+
+
+###getting clean dataset
+lsyear_export<-dat%>%
+  group_by(site) %>% 
+  mutate(lyear=max(year),
+         mexage=max(exage))%>%
+  filter(year==lyear, mexage==exage)%>%
+  mutate(site_block=paste(site, block, sep="##")) %>%
+  mutate(site_block_plot=paste(site_block, plot, sep="##"))
+
+lsyear_export2<-lsyear_export%>%
+  filter(site_block!="California_Sedgwick_Lisque##A"&
+           site_block!="California_Sedgwick_Lisque##B"&
+           site_block!="California_Sedgwick_Lisque##G"&
+           site_block!="DesertLow##Alkali"&
+           site_block_plot!="Jornada##east##30"&
+           site_block_plot!="Jornada##west##18"&
+           site_block_plot!="Jornada##west##19"&
+           site_block_plot!="Jornada##west##20"&
+           site_block_plot!="Jornada##west##21"&
+           site_block_plot!="Jornada##west##22")%>%
+  separate(site_block_plot, into=c("site","block","plot"), sep="##")%>%
+  select(-X, -lyear, -mexage, -site_block)%>%
+  select(site, block, plot, exage, year, trt, genus_species, relcov)
+write.csv(lsyear_export2, "All_Cleaned_April2019_V2.csv", row.names=F)  
