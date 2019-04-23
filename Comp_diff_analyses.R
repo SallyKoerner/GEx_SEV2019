@@ -3,7 +3,7 @@ library(codyn)
 library(rsq)
 
 setwd("~/Dropbox/Dominance WG/")
-
+comp_all<-read.csv("gex_multdiff_all.csv")
 comp<-read.csv("gex_multdiff_ave.csv")
 rac<-read.csv("gex_racdiff_ave.csv")
 experiment<-read.csv("Meta_SEV2019.csv")%>%
@@ -13,8 +13,7 @@ exage<-read.csv("All_Cleaned_April2019_V2.csv")%>%
   unique()
 
 ##graphing compositional differences and CI
-gex_multdiff_CI<-comp%>%
-  separate(site_block, into=c("site", "block"), sep="##") %>% 
+gex_multdiff_CI<-comp_all%>%
   group_by(site) %>% 
   summarize_at(vars(composition_diff), funs(mean, sd, length)) %>% 
   mutate(se=sd/sqrt(length),
@@ -93,7 +92,7 @@ rsq.partial(m1)
 comp_herb3<-comp_herb2%>%
   na.omit
 
-pairs(comp_herb3[,c(3, 5, 9)], pch = 21, labels=c("Exclosure\nAge","Plot Size", "Num\nExclosure"), font.labels=1, cex.labels=2,upper.panel=panel.cor)
+pairs(comp_herb3[,c(2, 3, 5, 9)], pch = 21, labels=c("Comp\nDiff", "Exclosure\nAge","Plot Size", "Num\nExclosure"), font.labels=1, cex.labels=2,upper.panel=panel.cor)
 
 ###doing multiple regression with biolgoical details
 
@@ -110,4 +109,6 @@ rsq.partial(m1)
 comp_bio2<-comp_bio%>%
   na.omit
 
-pairs(comp_bio[,c(15, 6,13, 7,9, 12,14)], pch = 21, labels=c("ANPP", "Dominance", "Richness", "Precip", "Graze\nPressure", "Guild", "Herb\nRich"), font.labels=1, cex.labels=2,upper.panel=panel.cor)
+pairs(comp_bio[,c(2, 15, 6,13, 7,9, 12,14)], pch = 21, labels=c("Comp\nDiff", "ANPP", "Dominance", "Richness", "Precip", "Graze\nPressure", "Guild", "Herb\nRich"), font.labels=1, cex.labels=2,upper.panel=panel.cor)
+
+hist(comp_bio$grazing.pressure)
