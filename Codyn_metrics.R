@@ -225,3 +225,73 @@ lsyear_export2<-lsyear_export%>%
   select(-X, -lyear, -mexage, -site_block)%>%
   select(site, block, plot, exage, year, trt, genus_species, relcov)
 write.csv(lsyear_export2, "All_Cleaned_April2019_V2.csv", row.names=F)  
+
+
+###looking at background variation in ungrazed and grazed comparisons
+#first subset to sites with multiple plots
+multreps<-lsyear%>%
+  select(site, block)%>%
+  unique()%>%
+  group_by(site)%>%
+  summarize(n=length(block))%>%
+  filter(n>1)
+
+lsyear_subset<-lsyear%>%
+  right_join(multreps)
+
+graze<-lsyear_subset%>%
+  filter(site_block!="California_Sedgwick_Lisque##A"&
+           site_block!="California_Sedgwick_Lisque##B"&
+           site_block!="California_Sedgwick_Lisque##G"&
+           site_block!="DesertLow##Alkali"&
+           site!="Jornada"&
+           site!="Junner Koeland"&
+           site!="Konza")%>%
+  filter(trt=="G")%>%
+  separate(site_block, into=c('site', 'block'), sep="##")
+
+comp_graze<-data.frame()
+sites<-unique(graze$site)
+
+for (i in 1:length(sites)){
+  
+  subset<-graze%>%
+    filter(site==sites[i]) %>%
+    mutate(block2=block)
+  
+  out <- multivariate_difference(subset, species.var="genus_species", abundance.var = "relcov", replicate.var = "block", treatment.var = "block2")
+  
+  out$site<-sites[i]
+  
+  comp_graze<-rbind(comp_graze, out)  
+}
+
+ungraze<-lsyear_subset%>%
+  filter(site_block!="California_Sedgwick_Lisque##A"&
+           site_block!="California_Sedgwick_Lisque##B"&
+           site_block!="California_Sedgwick_Lisque##G"&
+           site_block!="DesertLow##Alkali"&
+           site!="Jornada"&
+           site!="Junner Koeland"&
+           site!="Konza")%>%
+  filter(trt=="U")%>%
+  separate(site_block, into=c('site', 'block'), sep="##")
+
+comp_ungraze<-data.frame()
+sites<-unique(ungraze$site)
+
+for (i in 1:length(sites)){
+  
+  subset<-ungraze%>%
+    filter(site==sites[i]) %>%
+    mutate(block2=block)
+  
+  out <- multivariate_difference(subset, species.var="genus_species", abundance.var = "relcov", replicate.var = "block", treatment.var = "block2")
+  
+  out$site<-sites[i]
+  
+  comp_ungraze<-rbind(comp_ungraze, out)  
+}
+
+mean(comp_ungraze$composition_diff)#0.6005785
+mean(comp_graze$composition_diff)#0.5654668
