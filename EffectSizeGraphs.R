@@ -170,20 +170,62 @@ ggplot(data=gex_dom_CI2, aes(x=site2, y=mean, color=as.factor(colortrt)))+
 ##### Numerical Dominant, identify, determine change
 setwd("~/Dropbox/GEx_SEV/Data&Code")
 dat<-read.csv("ALL_Cleaned_April2019_V2.csv")
+test<-dat%>%
+  select(site, block)%>%
+  unique()
 
 dat2<-dat%>%
-  group_by(site, year, exage, block, trt, genus_species)%>%
+  group_by(site, block, trt, genus_species)%>%
   summarise(relcov=mean(relcov))%>%
   ungroup()%>%
-  group_by(site, year, exage, block, trt)%>%
-  filter(relcov==max(relcov))
+  group_by(site, block, trt)%>%
+  filter(relcov==max(relcov))%>%
+  ungroup()
+#unique(dat2$site)
 
 diff<-read.csv("gex_abund_diff_all.csv")
+#unique(diff$site)
 
 diff2<-left_join(dat2, diff, by=c("site", "block", "genus_species"))%>%
-  mutate(site_block=paste(site, block, sep='::'))
+  mutate(site_block=paste(site, block, sep='::'))%>%
+  mutate(exp_unit=paste(site, block, trt, sep='::'))
 
-#Create same/diff in dom species - cannot use simple spreaad because some sites have multiple co-dominants
+#generate rank of each species in each plot by relative cover, with rank 1 being most abundant
+datrank<-dat%>%
+  group_by(site, block, trt, genus_species)%>%
+  summarise(relcov=mean(relcov))%>%
+  ungroup()%>%
+  mutate(exp_unit=paste(site, block, trt, sep='::'))
+#unique(datrank$site)
+
+rankOrder <- datrank%>%
+  group_by(exp_unit)%>%
+  mutate(ranks = as.numeric(order(order(relcov, decreasing=TRUE))))%>%
+  ungroup()%>%
+  select(site, block,trt, genus_species, ranks)
+#unique(rankOrder$site)
+
+
+# how does rank of dom in grazed change
+gdom<-diff2%>%
+  filter(trt=="G")%>%
+  mutate(rankgrazed=1)%>%
+  select(-trt, -relcov, -difference, -exp_unit, -site_block)
+gdom2<- full_join(gdom, rankOrder, by=c("site", "block", "genus_species"))%>%
+  filter(trt=="U")%>%
+  filter(rankgrazed!="NA")
+
+SpNum<-dat%>%
+  filter(trt=="G")%>%
+  group_by(site, year, exage, block)%>%
+  summarise(numSp=n())%>%
+  ungroup()
+
+domrankshift<-merge(gdom2, SpNum, by=c("site", "block"), all=TRUE)%>%
+  filter(rankgrazed!="NA")
+
+
+#Create same/diff in dom species - cannot use simple spread because some sites have multiple co-dominants
 overlapSpeciesDoubled <- data.frame(row.names=1)
 
 diff3 <- diff2%>%
