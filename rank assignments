@@ -80,4 +80,4 @@ blockdeltadom <- ddply(bothranks2, c("site", "block"), summarise,
 )
 
 #write.csv(bothranks2, "~/bothranks2.csv", row.names=FALSE)
-#write.csv(blockdeltadom, "~/blockdeltadom", row.names=FALSE)
+#write.csv(blockdeltadom, "~/blockdeltadom.csv", row.names=FALSE)
