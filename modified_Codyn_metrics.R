@@ -158,11 +158,11 @@ lsyear3<-lsyear%>%
          site=="Konza")%>%
   mutate(site_block_plot=paste(site_block, plot, sep="##"))%>%
   filter(site_block_plot!="Jornada##east##30"&
-           site_block_plot!="Jornada##west##18"&
-           site_block_plot!="Jornada##west##19"&
-           site_block_plot!="Jornada##west##20"&
-           site_block_plot!="Jornada##west##21"&
-           site_block_plot!="Jornada##west##22")
+        site_block_plot!="Jornada##west##18"&
+        site_block_plot!="Jornada##west##19"&
+        site_block_plot!="Jornada##west##20"&
+        site_block_plot!="Jornada##west##21"&
+        site_block_plot!="Jornada##west##22")
 
 gex_multdiff2<-data.frame()
 siteblockplot<-unique(lsyear3$site_block_plot)
@@ -242,7 +242,7 @@ for (i in 1:length(siteblockplot)){
 
 gexRACdiff2_ave<-gex_RACdiff2%>%
   group_by(site_block, trt, trt2, treatment, treatment2)%>%
-  summarize_at(vars(richness_diff, evenness_diff, rank_diff, species_diff), funs(mean))
+  summarize_at(vars(richness_diff, evenness_diff, rank_diff, species_diff), funs(mean), na.rm=T)
 
 gex_RACdiff_all<-gex_RACdiff %>% 
   bind_rows(gexRACdiff2_ave)%>%
@@ -252,8 +252,10 @@ gex_RACdiff_all<-gex_RACdiff %>%
 write.csv(gex_RACdiff_all, "gex_RACdiff_all_lnRR.csv", row.names = F)
 
 gex_RACdiff_ave<-gex_RACdiff_all%>%
-  group_by(site) %>% 
-  summarize_at(vars(richness_diff, evenness_diff, rank_diff, species_diff), funs(mean))
+  filter(!is.na(evenness_diff))%>%
+  group_by(site)%>% 
+  summarize_at(vars(richness_diff, evenness_diff, rank_diff, species_diff), funs(mean))%>%
+  ungroup()
 
 write.csv(gex_RACdiff_ave, "gex_RACdiff_ave_lnRR.csv", row.names = F)
 
