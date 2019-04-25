@@ -213,7 +213,7 @@ for (i in 1:length(siteblock)){
     filter(site_block==siteblock[i]) %>%
     mutate(treatment=trt)
   
-  out <- RAC_lnRR_difference(subset, species.var="genus_species", abundance.var = "relcov", replicate.var = "trt", treatment.var = "treatment")
+  out <- RAC_lnRR_difference(subset, species.var="genus_species", abundance.var = "relcov", replicate.var = "trt", treatment.var = "treatment", reference.treatment="U")
   
   out$site_block<-siteblock[i]
   
@@ -229,7 +229,7 @@ for (i in 1:length(siteblockplot)){
     filter(site_block_plot==siteblockplot[i]) %>%
     mutate(treatment=trt)
   
-  out <- RAC_lnRR_difference(subset, species.var="genus_species", abundance.var = "relcov", replicate.var = "trt", treatment.var = "treatment")
+  out <- RAC_lnRR_difference(subset, species.var="genus_species", abundance.var = "relcov", replicate.var = "trt", treatment.var = "treatment", reference.treatment="U")
   
   un_site_block<-unique(subset$site_block)
   un_plot<-unique(subset$plot)
@@ -249,13 +249,13 @@ gex_RACdiff_all<-gex_RACdiff %>%
   separate(site_block, into=c("site", "block"), sep="##")%>%
   select(site, block, richness_diff, evenness_diff, rank_diff, species_diff)
 
-write.csv(gex_RACdiff_all, "gex_RACdiff_all.csv", row.names = F)
+write.csv(gex_RACdiff_all, "gex_RACdiff_all_lnRR.csv", row.names = F)
 
 gex_RACdiff_ave<-gex_RACdiff_all%>%
   group_by(site) %>% 
   summarize_at(vars(richness_diff, evenness_diff, rank_diff, species_diff), funs(mean))
 
-write.csv(gex_RACdiff_ave, "gex_RACdiff_ave.csv", row.names = F)
+write.csv(gex_RACdiff_ave, "gex_RACdiff_ave_lnRR.csv", row.names = F)
 
 ###doing abundance differences
 
