@@ -79,5 +79,5 @@ blockdeltadom <- ddply(bothranks2, c("site", "block"), summarise,
                   blockdeltadom    = mean(deltadom)
 )
 
-#write.csv(bothranks2, "~/bothranks2.csv", row.names=FALSE)
-#write.csv(blockdeltadom, "~/blockdeltadom.csv", row.names=FALSE)
+#write.csv(bothranks2, "bothranks2.csv", row.names=FALSE)
+#write.csv(blockdeltadom, "blockdeltadom.csv", row.names=FALSE)
