@@ -200,9 +200,9 @@ datrank<-dat%>%
 
 rankOrder <- datrank%>%
   group_by(exp_unit)%>%
-  mutate(ranks = as.numeric(order(order(relcov, decreasing=TRUE))))%>%
+  mutate(ranks = rank(-relcov, ties.method = "min"))%>%
   ungroup()%>%
-  select(site, block,trt, genus_species, ranks)
+  select(site, block,trt, genus_species, ranks, relcov)
 #unique(rankOrder$site)
 
 
@@ -259,3 +259,7 @@ overlapNumber <- overlapSpecies%>%
     group_by(site)%>%
     summarise(num=mean(overlapNum))%>%
   ungroup()
+
+write.csv(overlapSpecies, file="Dom_SameDiff_byBlock_SEV_April2019.csv", row.names=FALSE)
+write.csv(overlapNumber, file="Dom_SameDiff_bySite_SEV_April2019.csv", row.names=FALSE)
+
