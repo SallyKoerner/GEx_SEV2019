@@ -39,9 +39,17 @@ CmaxDiff <- read.csv('GEx_codominane_04242019.csv')%>% #Cmax imported, need to c
   group_by(site)%>%
   summarise(Cmax_diff=mean(Cmax_diff))%>%
   ungroup()
-photopath <- read.csv('percent_photosynthetic_pathway.csv')
-phylorealms <- read.csv('PhyloRealms.csv')%>%select(-X)
-domRankChange <- read.csv('sitelevel_domspecies_rankchange.csv')%>%select(-X)
+photopath <- read.csv('percent_photosynthetic_pathway.csv') #photosynthetic pathways
+phylorealms <- read.csv('PhyloRealms.csv')%>%select(-X) #phylogenetic realms
+domRankDiff <- read.csv('sitelevel_domspecies_rankchange.csv')%>%select(-X) #rank change of dominant species
+domPercentDiff <- read.csv('DomIdentityNumChangeLRR_bySite_SEV_April2019.csv') #percent abundance difference of dominant species
+blockNum <- read.csv('GEx_cleaned_v3.csv')%>%
+  select(site, block)%>%
+  unique()%>%
+  group_by(site)%>%
+  summarise(num_blocks=length(block))%>%
+  ungroup()
+  
 
 ###merge together
 compDiffSite <- domDiff%>%
@@ -52,7 +60,9 @@ compDiffSite <- domDiff%>%
   left_join(codomDiff)%>%
   left_join(photopath)%>%
   left_join(phylorealms)%>%
-  left_join(domRankChange)%>%
+  left_join(domRankDiff)%>%
+  left_join(domPercentDiff)%>%
+  left_join(blockNum)%>%
   mutate(site_dom=(GDom+UDom)/2) #calculate average dominance between grazed and ungrazed areas
 
-# write.csv(compDiffSite, 'community_difference_allmetrics_siteavg_04262019.csv', row.names=F)
+# write.csv(compDiffSite, 'community_difference_allmetrics_siteavg_04262019b.csv', row.names=F)
