@@ -9,8 +9,45 @@ setwd("C:\\Users\\wilco\\Desktop\\Working groups\\Grazing\\trait data\\")
 library(tidyverse)
 
 ### Import data
-relcov_full <- read.csv("CLean_GEx1.csv")
+dom_trait_relcov <- read.csv("GEx_Dominant_Species_Trait_environmental.csv") %>%
+  dplyr::select(site, block, plot, trt, clean_ejf, relcov, 
+                Leaf_Area_Mean, Leaf_N_Mass_Mean, Lifespan_Mean, Height_Mean, SLA_Mean) %>%
+  gather(key=trait_name, value=trait_value, -site:-relcov) %>%
+  spread(key=trt, value=relcov) %>%
+  mutate(U = replace(U, is.na(U), 0)) %>%
+  mutate(G = replace(G, is.na(G), 0)) %>%
+  mutate(GrResp_subtract = G-U,
+         GrResp_pCh = abs(G-U)/U,
+         GrResp_lnRR = log(G/U))
 
+write.csv(dom_trait_relcov, file="GEx response ratios_cleanedUnits.csv", row.names=F)
+
+
+trait_relcov_all <- read.csv("GEx_All_Sites_species_trait_environmental.csv")
+
+site_chars <- trait_relcov_all %>%
+  dplyr::select(site, CVpercBA:herb_map_2)
+
+?read.csv
+relcov_matrix <- trait_relcov_all %>%
+  mutate(plot_id = paste(site, year, block, plot, trt, sep="_")) %>%
+  dplyr::select(plot_id, clean_ejf, relcov) %>%
+  group_by(plot_id, clean_ejf) %>%
+  summarize(relcov=sum(relcov,na.rm=T)) %>%
+  ungroup() %>%
+  spread(key=clean_ejf, value=relcov)
+
+relcov_matrix[c(3853,3860),]
+trait_matrix <- trait_relcov_all %>%
+  dplyr::select(clean_ejf,  Leaf_Area_Mean, Leaf_N_Mass_Mean, Lifespan_Mean, Height_Mean, SLA_Mean) %>%
+  group_by(clean_ejf) %>%
+  summarize(Leaf_Area_Mean = mean(Leaf_Area_Mean, na.rm=T),
+            Leaf_N_Mass_Mean = mean(Leaf_N_Mass_Mean, na.rm=T),
+            Height_Mean = mean(Height_Mean, na.rm=T),
+            SLA_Mean = mean(SLA_Mean, na.rm=T))
+
+write.csv(relcov_matrix, file="relcov matrix_forRobert.csv", row.names=F)
+write.csv(trait_matrix, file="trait matrix_forRobert.csv", row.names=F)
 ### Clean up relcov data
 relcov_last_year_only <- relcov_full %>%
   group_by(site) %>%
@@ -19,6 +56,15 @@ relcov_last_year_only <- relcov_full %>%
   filter(site !="DesertLow" | block != "Alkali") %>%
   filter(site !="Jornada" | block != "west" | !plot %in% 18:22) %>%
   filter(site !="Jornada" | block != "east" | plot != 30)
+
+
+###
+### grazing impacts on community weighted means across sites
+###
+
+trait_comm_means <- read.csv("") 
+
+trait_comm_responses %>% trait_comm_means
 
 relcov_responses <- relcov_last_year_only %>%
   dplyr::select(-X, -X.1) %>%
@@ -68,10 +114,15 @@ levels(factor(relcov_traits$TraitName))
 ggplot(filter(relcov_traits,TraitName=="Leaf area per leaf dry mass (specific leaf area, SLA or 1/LMA): petiole excluded"),
        aes(x=mean_trait, y=GrResp_))
 
-ggplot(relcov_traits, aes(x=mean_trait, y=GrResp_subtract)) +
+ggplot(dom_trait_relcov, aes(x=trait_value, y=GrResp_subtract)) +
   geom_point()+
   geom_smooth(method="lm") +
-  facet_wrap(~TraitName, scales="free")
+  facet_wrap(~trait_name, scales="free") +
+
+ggplot(dom_trait_relcov, aes(x=trait_value, y=GrResp_lnRR)) +
+  geom_point()+
+  geom_smooth(method="lm") +
+  facet_wrap(~trait_name, scales="free")
 
 ggplot(relcov_traits, aes(x=mean_trait, y=GrResp_pCh)) +
   geom_point()+
@@ -83,11 +134,11 @@ ggplot(relcov_traits, aes(x=mean_trait, y=GrResp_lnRR)) +
   ylim(-4.5,4.5) +
   facet_wrap(~TraitName, scales="free")
 
-ggplot(filter(relcov_traits, TraitID==3106), aes(x=mean_trait, y=GrResp_lnRR)) +
+ggplot(filter(dom_trait_relcov, trait_name=="Leaf_N_Mass_Mean"), aes(x=trait_value, y=GrResp_subtract)) +
   geom_point()+
   geom_smooth(method="lm")+
   theme_classic() +
-  xlim(0,1)
+#  xlim(0,5)
 
 
 boxplot(relcov_traits$mean_trait)
