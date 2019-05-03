@@ -124,6 +124,7 @@ codomSppList <- Cmax%>%
   filter(rank<=num_codominants)%>%
   ungroup()
 
+#write.csv(codomSppList, 'GEx_codominane_04242019.csv', row.names=F)
 
 #histogram of codom
 ggplot(data=codomSppList, aes(x=num_codominants)) +

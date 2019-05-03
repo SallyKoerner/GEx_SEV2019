@@ -190,6 +190,27 @@ diff2<-left_join(dat2, diff, by=c("site", "block", "genus_species"))%>%
   mutate(site_block=paste(site, block, sep='::'))%>%
   mutate(exp_unit=paste(site, block, trt, sep='::'))
 
+DomChangeNum<-diff2%>%
+  filter(trt=="G")%>%
+  select(site, block, genus_species)
+
+#Dominant Identiy Change with % cover
+DomChangeNum2<-left_join(DomChangeNum, dat2)%>%
+  spread(trt, relcov)
+  
+  DomChangeNum2$U[is.na(DomChangeNum2$U)]<-0
+  
+DomChangeNum3<-DomChangeNum2 %>%
+  mutate(U2=ifelse(U==0, U+1, U))%>%
+  mutate(DomIdentityChange_LogRR=(log(G/U2)))
+write.csv(DomChangeNum3, file="DomIdentityNumChangeLRR_byBlock_SEV_April2019.csv", row.names=FALSE)
+
+DomChangeNum4<-DomChangeNum3 %>%
+  group_by(site)%>%
+  summarise(DomIdentityChange_LogRR=mean(DomIdentityChange_LogRR))
+write.csv(DomChangeNum4, file="DomIdentityNumChangeLRR_bySite_SEV_April2019.csv", row.names=FALSE)
+
+
 #generate rank of each species in each plot by relative cover, with rank 1 being most abundant
 datrank<-dat%>%
   group_by(site, block, trt, genus_species)%>%
@@ -206,7 +227,7 @@ rankOrder <- datrank%>%
 #unique(rankOrder$site)
 
 
-# how does rank of dom in grazed change
+# how does rank of dom in grazed change ---- could not Figure this out - Lauren and Tim made it work
 gdom<-diff2%>%
   filter(trt=="G")%>%
   mutate(rankgrazed=1)%>%
