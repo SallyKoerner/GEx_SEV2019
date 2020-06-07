@@ -130,12 +130,19 @@ codomSppList <- Cmax%>%
 ggplot(data=codomSppList, aes(x=num_codominants)) +
   geom_histogram(color="black", fill="white", binwidth=1) +
   xlab('Number of Codominant Species') + ylab('Count')
+#export at 1000x800
+
+ggplot(data=codomSppList, aes(x=Cmax, y=num_codominants)) +
+  geom_point() +
+  xlab('Cmax') + ylab('Number of Codominants')
+#export at 800x800
 
 
 ###what drives codominance?
 
 #read in site-level data
-siteData <- read.csv('Meta_SEV2019_v2.csv')
+siteData <- read.csv('Meta_SEV2019_v2.csv')%>%
+  select(-X)
 
 #get site-level average cmax and number of codominants
 CmaxDrivers <- Cmax%>%
@@ -151,6 +158,7 @@ CmaxDrivers <- Cmax%>%
 ggplot(data=CmaxDrivers, aes(x=Cmax, y=num_codominants)) +
   geom_point() +
   xlab('Cmax') + ylab('Number of Codominants')
+#export at 800x800
 
 
 ###figures and models for number of codominants-------------
@@ -252,8 +260,7 @@ ggplot(data=barGraphStats(data=CmaxDrivers, variable="Cmax", byFactorNames=c("tr
 ###multiple regression -- within grazed plots, effects of herbivores
 #number of codominants - driven by precip, species richness, biogeographic realm
 summary(lm(Cmax ~ precip + sprich + biogeographic.realm + grazing.pressure + herbivore.spp, data=subset(CmaxDrivers, trt=='G')))
-#remove the outlier at 17 - driven by species richness, biogeographic realm, number of herbivore species
-summary(lm(num_codominants ~ precip + sprich + biogeographic.realm + grazing.pressure +herbivore.spp, data=subset(CmaxDrivers, num_codominants<17 & trt=='G')))
+
 
 #figures - Cmax
 ggplot(data=subset(CmaxDrivers, trt=='G'), aes(x=sprich, y=Cmax, color=Cmax)) +
