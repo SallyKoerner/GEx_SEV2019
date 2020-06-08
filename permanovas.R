@@ -52,6 +52,7 @@ for (i in 1:length(sitelist)){
   env<-wide[,1:11]
   
   out <- adonis(species~trt, data=env, method="bray", strata=env$block)
+  adonis(wide[,12:ncol(wide)]~trt, wide, strata = wide$block)
   
   perm_out <- data.frame(
     site = sitelist[i],
@@ -65,20 +66,15 @@ test2<-gex_permanova%>%
   left_join(numreps)
 
 ## look at NMDS to see gut check
-# test<-metaMDS(species, distance = "bray")
-# 
-# output<-as.data.frame(test$points)
-# 
-# output2<-cbind(env, output)
-# 
-# scores <- data.frame(scores(test, display="sites"))  # Extracts NMDS scores for year "i" #
-# scores2<- cbind(env, scores) # binds the NMDS scores of year i to all years previously run
-# 
-# ggplot(scores2, aes(x=NMDS1, y=NMDS2, color=trt, shape=block))+
-#   geom_point(size=5)
-# 
-# plot(test)
+test<-metaMDS(species, distance = "bray")
 
+scores <- data.frame(scores(test, display="sites"))  # Extracts NMDS scores for year "i" #
+scores2<- cbind(env, scores) # binds the NMDS scores of year i to all years previously run
+
+ggplot(scores2, aes(x=NMDS1, y=NMDS2, color=trt, shape=block))+
+  geom_point(size=5)
+
+####ignore below
 permanova_out_mod <- permanova_out_master %>%
   mutate(pval_flag_perm = ifelse(perm_Pvalue<.05, 1, 0)) %>%
   mutate(pval_flag_disp = ifelse(disp_Pvalue<.05, 1, 0)) %>%
@@ -86,6 +82,7 @@ permanova_out_mod <- permanova_out_master %>%
   group_by(site_project_comm, treatment) %>%
   summarise(tot_pval=sum(pval_flag)) %>%
   filter(tot_pval != 0)
+
 ##three sites, konza, jornada and junner koeland, had plots nested in block. need to use that informaiton here.
 
 lsyear3<-lsyear%>%
