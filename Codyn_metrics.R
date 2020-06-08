@@ -2,7 +2,7 @@ library(tidyverse)
 library(codyn)
 library(rsq)
 
-setwd("~/Dropbox/Dominance WG/")
+setwd("C:\\Users\\mavolio2\\Dropbox\\Dominance WG\\")
 
 dat<-read.csv("ALL_Cleaned_Apr2019.csv")
 
