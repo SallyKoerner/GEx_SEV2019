@@ -2,3 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
+
+# Data files
+*.csv
+
+# Mac DS Store
+.DS_Store
