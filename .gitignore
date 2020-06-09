@@ -4,7 +4,7 @@
 .Ruserdata
 
 # Data files
-*.csv
+All_Cleaned_April2019_V2.csv
 
 # Mac DS Store
 .DS_Store
