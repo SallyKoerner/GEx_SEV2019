@@ -21,36 +21,37 @@ data.in = cbind(Treatment = pop.ind, PC1 = pc.in[,1], PC2 = pc.in[,2])
 
 # where pop.ind is the group indicator variable 
 
-> head(data.in)
+head(data.in)
 
-Treatment      PC1        PC2
-1   Natural -2.16337 -1.2300800
-2   Natural -3.35751  0.1242660
-3   Natural -1.72002  0.0719634
-4   Natural -1.48639 -0.0646673
-5   Natural -1.11385  0.3605570
-6   Natural -0.86583  0.4979210
+# Treatment      PC1        PC2
+# 1   Natural -2.16337 -1.2300800
+# 2   Natural -3.35751  0.1242660
+# 3   Natural -1.72002  0.0719634
+# 4   Natural -1.48639 -0.0646673
+# 5   Natural -1.11385  0.3605570
+# 6   Natural -0.86583  0.4979210
 
 # B. perform appropriate linear model analysis on each principal component axis.
 #    For this example, aov performs a one-way lm analysis
 #    - Using summary on the aov function gives a 2 x 5 matrix in the 1st list item
 
-test.1=summary(aov(PC1~Treatment, data=data.in))
-test.2=summary(aov(PC2~Treatment, data=data.in))
+test.1=summary(aov(pc1~treatment, data=data.in))
+test.2=summary(aov(pc2~treatment, data=data.in))
 
 ## result of anovas
-> test.1
-Df Sum Sq Mean Sq F value Pr(>F)  
-Treatment    2  23.06  11.532   4.262  0.018 *
-  Residuals   68 184.00   2.706                 
----
-  Signif. codes:  0 â€˜***â€™ 0.001 â€˜**â€™ 0.01 â€˜*â€™ 0.05 â€˜.â€™ 0.1 â€˜ â€™ 1
-> test.2
-Df Sum Sq Mean Sq F value   Pr(>F)    
-Treatment    2  54.37  27.185   46.32 2.03e-13 ***
-  Residuals   68  39.91   0.587                     
----
-  Signif. codes:  0 â€˜***â€™ 0.001 â€˜**â€™ 0.01 â€˜*â€™ 0.05 â€˜.â€™ 0.1 â€˜ â€™ 1
+test.1
+# Df Sum Sq Mean Sq F value Pr(>F)  
+# Treatment    2  23.06  11.532   4.262  0.018 *
+#   Residuals   68 184.00   2.706                 
+# ---
+#   Signif. codes:  0 â€˜***â€™ 0.001 â€˜**â€™ 0.01 â€˜*â€™ 0.05 â€˜.â€™ 0.1 â€˜ â€™ 1
+
+test.2
+# Df Sum Sq Mean Sq F value   Pr(>F)    
+# Treatment    2  54.37  27.185   46.32 2.03e-13 ***
+#   Residuals   68  39.91   0.587                     
+# ---
+#   Signif. codes:  0 â€˜***â€™ 0.001 â€˜**â€™ 0.01 â€˜*â€™ 0.05 â€˜.â€™ 0.1 â€˜ â€™ 1
 
 
 # C. Get Sums of Squares from each test to get overall results.
@@ -66,8 +67,8 @@ dfTreat.y = test.2[[1]][1,1]
 dfError.y = test.2[[1]][2,1]
 
 # D. Add Sums of Square for overall test
-sumSS.trtmnt=(ssTreat.x+ssTreat.y)/(dfTreat.x+dfTreat.y)
-sumSS.error=(ssError.x+ssError.y)/(dfError.x+dfError.y)
+sumSS.trtmnt=(ssTreat.x)/(dfTreat.x)
+sumSS.error=(ssError.x)/(dfError.x)
 
 # F-test
 F.all =sumSS.trtmnt/mean.error
