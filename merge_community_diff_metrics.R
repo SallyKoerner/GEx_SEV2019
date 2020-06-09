@@ -66,3 +66,22 @@ compDiffSite <- domDiff%>%
   mutate(site_dom=(GDom+UDom)/2) #calculate average dominance between grazed and ungrazed areas
 
 # write.csv(compDiffSite, 'community_difference_allmetrics_siteavg_04262019b.csv', row.names=F)
+
+
+####Sallys Add in strats here --- reimport above write
+
+###import data
+All <- read.csv('community_difference_allmetrics_siteavg_04262019b.csv')
+Climate <- read.csv('climatePCAs.csv')
+Meta <- read.csv('GEx-metadata-with-other-env-layers-v2.csv')
+Herb<- read.csv('Meta_SEV2019_v2_with_body_size.csv')
+
+All2<-All %>% 
+  left_join(Meta)%>%
+  left_join(Climate)%>%
+  left_join(Herb) %>% 
+  mutate(ALLC3=(C3+C3.)) %>% 
+  mutate(ALLC4=(C4+C4.)) %>% 
+  mutate(PhotoMix=abs(ALLC3-ALLC4)) 
+
+write.csv(All2, 'community_difference_allmetrics_siteavg_09June2020.csv', row.names=F)
