@@ -1,15 +1,15 @@
 ################################################################################
-##  GEx_codominance.R: Calculate codominance of a community for GEx database.
+##  NutNet_codominance.R: Calculate codominance of a community for NutNet database.
 ##
 ##  Author: Kimberly Komatsu
-##  Date created: April 24, 2019
+##  Date created: June 9, 2020
 ################################################################################
 
 library(psych)
 library(tidyverse)
 
 #kim's laptop
-setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\GEx working groups\\SEV 2019\\codominance\\data\\GEx')
+setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\GEx working groups\\SEV 2019\\codominance\\data\\nutnet')
 
 
 
@@ -78,7 +78,7 @@ differenceData <- harmonicMean%>%
   left_join(rankOrder)%>%
   filter(rank==num_ranks+1)%>% #only keep the next most abundant species after the number that went into the calculation of the harmonic mean
   mutate(difference=harmonic_mean-relcov) #calculates difference between harmonic mean and the relative cover of the next most abundant species
-  
+
 Cmax <- differenceData%>%
   group_by(exp_unit)%>%
   summarise(Cmax=max(difference))%>%
