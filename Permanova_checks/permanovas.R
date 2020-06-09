@@ -5,6 +5,7 @@ library(vegan)
 source("Wd.R")
 
 setwd("/Users/avahoffman/Dropbox/Research/Grazing_consortium/2020/GEx_SEV2019")
+#setwd("C:\\Users\\mavolio2\\Dropbox\\Dominance WG\\")
 
 dat<-read.csv("All_Cleaned_April2019_V2.csv")
 
@@ -34,7 +35,7 @@ numreps<-lsyear%>%
 
 lsyear2.2<-lsyear2%>%
   left_join(numreps)%>%
-  filter(num!=1)
+  filter(num>4)
 
 gex_permanova<-data.frame()
 sitelist<-unique(lsyear2.2$site)
@@ -70,6 +71,7 @@ for (i in sitelist){
     Tw2.test(dm, env$trt)
   WdS_test_out <- 
     WdS.test(dm, env$trt)
+
   
   # Assemble data frame
   perm_out <- data.frame(
@@ -88,9 +90,20 @@ test2<-gex_permanova%>%
   left_join(numreps)
 
 ## look at NMDS to see gut check
-test<-metaMDS(species, distance = "bray")
+msub<-lsyear2.2%>%
+  filter(site=="Argentina_ElPalmar") 
 
-scores <- data.frame(scores(test, display="sites"))  # Extracts NMDS scores for year "i" #
+mwide<-msub%>%
+  spread(genus_species, relcov, fill=0)
+
+species<-mwide[,12:ncol(mwide)]
+
+env<-mwide[,1:11]
+
+
+mds<-metaMDS(species, distance = "bray")
+
+scores <- data.frame(scores(mds, display="sites"))  # Extracts NMDS scores 
 scores2<- cbind(env, scores) # binds the NMDS scores of year i to all years previously run
 
 ggplot(scores2, aes(x=NMDS1, y=NMDS2, color=trt, shape=block))+
