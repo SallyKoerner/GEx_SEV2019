@@ -2,6 +2,7 @@ library(tidyverse)
 library(codyn)
 library(rsq)
 library(vegan)
+source("Wd.R")
 
 setwd("/Users/avahoffman/Dropbox/Research/Grazing_consortium/2020/GEx_SEV2019")
 
@@ -37,7 +38,6 @@ lsyear2.2<-lsyear2%>%
 
 gex_permanova<-data.frame()
 sitelist<-unique(lsyear2.2$site)
-
 
 for (i in sitelist){
   
