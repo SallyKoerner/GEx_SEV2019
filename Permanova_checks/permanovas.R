@@ -3,18 +3,20 @@ library(codyn)
 library(rsq)
 library(vegan)
 
-setwd("~/Dropbox/Dominance WG/")
+setwd("/Users/avahoffman/Dropbox/Research/Grazing_consortium/2020/GEx_SEV2019")
 
-dat<-read.csv("ALL_Cleaned_Apr2019.csv")
+dat<-read.csv("All_Cleaned_April2019_V2.csv")
 
 lsyear<-dat%>%
   group_by(site) %>% 
   mutate(lyear=max(year),
          mexage=max(exage))%>%
   filter(year==lyear, mexage==exage)%>%
+  mutate(block = as.numeric(block))%>%
   mutate(site_block=paste(site, block, sep="##"))
 
-lsyear2<-lsyear%>%
+lsyear2<-
+  lsyear%>%
   filter(site_block!="California_Sedgwick_Lisque##A"&
            site_block!="California_Sedgwick_Lisque##B"&
            site_block!="California_Sedgwick_Lisque##G"&
@@ -37,29 +39,49 @@ gex_permanova<-data.frame()
 sitelist<-unique(lsyear2.2$site)
 
 
-for (i in 1:length(sitelist)){
+for (i in sitelist){
   
   subset<-lsyear2.2%>%
-    filter(site==sitelist[i]) %>%
+    filter(site==i) %>%
     mutate(treatment=trt)
   
-  wide<-subset%>%
-    select(-X)%>%
+  wide<-
+    subset%>%
     spread(genus_species, relcov, fill=0)
   
-  species<-wide[,12:ncol(wide)]
+  species<-
+    as.data.frame(wide[,12:ncol(wide)])
   
-  env<-wide[,1:11]
+  env<-
+    as.data.frame(wide[,1:11])
   
-  out <- adonis(species~trt, data=env, method="bray", strata=env$block)
-  adonis(wide[,12:ncol(wide)]~trt, wide, strata = wide$block)
+  # Perform permamova
+  # Try with and without `strata =` option
+  out <- 
+    adonis(species~trt, data=env, method="bray")
+  #adonis(wide[,12:ncol(wide)]~trt, wide, strata = wide$block)
   
+  # Perform alternative W* test
+  # First do distance matrix
+  dm <- 
+    as.matrix(dist(species))
+  
+  Tw_test_out <- 
+    Tw2.test(dm, env$trt)
+  WdS_test_out <- 
+    WdS.test(dm, env$trt)
+  
+  # Assemble data frame
   perm_out <- data.frame(
-    site = sitelist[i],
-    perm_Pvalue =  out$aov.tab$'Pr(>F)'[1]
+    site = i,
+    perm_Pvalue =  out$aov.tab$'Pr(>F)'[1],
+    Tw_Pvalue = Tw_test_out$p.value,
+    WdS_Pvalue = WdS_test_out$p.value
   )
+  perm_out
   
-   gex_permanova<-rbind(gex_permanova, perm_out)  
+  gex_permanova<-rbind(gex_permanova, perm_out)  
+   
 }
 
 test2<-gex_permanova%>%
