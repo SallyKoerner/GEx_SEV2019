@@ -117,7 +117,7 @@ ggplot(data=subset(codomSppList, year_trt==0), aes(x=Cmax, y=num_codominants)) +
 
 #read in site-level data
 siteData <- read.csv('comb-by-plot-clim-soil-diversity-03-Jun-2020.csv')%>%
-  rename(site=site_code, MAT=MAT_v2, temp_range=ANN_TEMP_RANGE_v2, MAP=MAP_v2, precip_cv=MAP_VAR_v2)
+  rename(site=site_code, plant_gamma=site_richness, MAT=MAT_v2, temp_range=ANN_TEMP_RANGE_v2, MAP=MAP_v2, precip_cv=MAP_VAR_v2, Ndep=N_Dep)
 
 #get site-level average cmax and number of codominants
 CmaxDrivers <- Cmax%>%
@@ -129,7 +129,7 @@ CmaxDrivers <- Cmax%>%
   ungroup()%>%
   left_join(siteData)
 
-# write.csv(CmaxDrivers, 'NutNet_codominance_06092020.csv')
+# write.csv(CmaxDrivers, 'NutNet_codominance_06092020.csv', row.names=F)
 
 ggplot(data=CmaxDrivers, aes(x=Cmax, y=num_codominants)) +
   geom_point() +

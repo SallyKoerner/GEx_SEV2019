@@ -118,7 +118,7 @@ ggplot(data=codomSppList, aes(x=Cmax, y=num_codominants)) +
 #read in site-level data
 siteData <- read.csv('GEx-metadata-with-other-env-layers-v2.csv')%>%
   select(-X)%>%
-  rename(Ndep=N.deposition1993, latitude=Final.Lat, longitude=Final.Long, MAT=bio1, temp_range=bio7, MAP=bio12, precip_cv=bio15)
+  rename(plant_gamma=sprich, Ndep=N.deposition1993, latitude=Final.Lat, longitude=Final.Long, MAT=bio1, temp_range=bio7, MAP=bio12, precip_cv=bio15)
 
 #get site-level average cmax and number of codominants
 CmaxDrivers <- Cmax%>%
@@ -130,7 +130,7 @@ CmaxDrivers <- Cmax%>%
   ungroup()%>%
   left_join(siteData)
 
-# write.csv(CmaxDrivers, 'GEx_codominance_06092020.csv')
+# write.csv(CmaxDrivers, 'GEx_codominance_06092020.csv', row.names=F)
 
 ggplot(data=CmaxDrivers, aes(x=Cmax, y=num_codominants)) +
   geom_point() +
