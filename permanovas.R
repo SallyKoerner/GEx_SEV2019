@@ -7,6 +7,11 @@ setwd("C:\\Users\\mavolio2\\Dropbox\\Dominance WG\\")
 
 dat<-read.csv("All_Cleaned_April2019_V2.csv")
 
+exage<-dat%>%
+  select(site, exage)%>%
+  unique()%>%
+  filter(exage>10)
+
 lsyear<-dat%>%
   group_by(site) %>% 
   mutate(lyear=max(year),
