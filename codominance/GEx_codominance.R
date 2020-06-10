@@ -122,10 +122,10 @@ siteData <- read.csv('GEx-metadata-with-other-env-layers-v2.csv')%>%
 
 #get site-level average cmax and number of codominants
 CmaxDrivers <- Cmax%>%
-  group_by(site, block, trt)%>%
+  group_by(site, block, year, trt)%>%
   summarise(num_codominants=mean(num_codominants), Cmax=mean(Cmax))%>%
   ungroup()%>%
-  group_by(site, trt)%>%
+  group_by(site, year, trt)%>%
   summarise(num_codominants=mean(num_codominants), Cmax=mean(Cmax))%>%
   ungroup()%>%
   left_join(siteData)

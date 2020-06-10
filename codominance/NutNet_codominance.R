@@ -117,14 +117,16 @@ ggplot(data=subset(codomSppList, year_trt==0), aes(x=Cmax, y=num_codominants)) +
 
 #read in site-level data
 siteData <- read.csv('comb-by-plot-clim-soil-diversity-03-Jun-2020.csv')%>%
+  select(site_code, continent, country, region, managed, burned, grazed, anthropogenic, habitat, elevation, latitude, longitude, site_richness, MAT_v2, ANN_TEMP_RANGE_v2, MAP_v2, MAP_VAR_v2, N_Dep, experiment_type, year, year_trt, first_nutrient_year, first_fenced_year, site_native_richness, site_introduced_richness)%>%
+  unique()%>%
   rename(site=site_code, plant_gamma=site_richness, MAT=MAT_v2, temp_range=ANN_TEMP_RANGE_v2, MAP=MAP_v2, precip_cv=MAP_VAR_v2, Ndep=N_Dep)
 
 #get site-level average cmax and number of codominants
 CmaxDrivers <- Cmax%>%
-  group_by(site, block)%>%
+  group_by(site, year, trt, block)%>%
   summarise(num_codominants=mean(num_codominants), Cmax=mean(Cmax))%>%
   ungroup()%>%
-  group_by(site)%>%
+  group_by(site, year, trt)%>%
   summarise(num_codominants=mean(num_codominants), Cmax=mean(Cmax))%>%
   ungroup()%>%
   left_join(siteData)
