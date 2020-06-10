@@ -1,15 +1,15 @@
 ################################################################################
-##  GEx_codominance.R: Calculate codominance of a community for GEx database.
+##  NutNet_codominance.R: Calculate codominance of a community for NutNet database.
 ##
 ##  Author: Kimberly Komatsu
-##  Date created: April 24, 2019
+##  Date created: June 9, 2020
 ################################################################################
 
 library(psych)
 library(tidyverse)
 
 #kim's laptop
-setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\GEx working groups\\SEV 2019\\codominance\\data\\GEx')
+setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\GEx working groups\\SEV 2019\\codominance\\data\\nutnet')
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=34, color='black'),
@@ -19,21 +19,20 @@ theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)
              legend.title=element_blank(), legend.text=element_text(size=20))
 
 ###read in data
-GEx <- read.csv('GEx_cleaned_v3.csv')%>%
-  select(-genus_species)%>%
-  rename(genus_species=clean_ejf, cover=relcov)%>%
-  mutate(exp_unit=paste(site, block, plot, trt, year, sep='::'))
-
+nutnet <- read.csv('full-cover-03-June-2020.csv')%>%
+  rename(cover=max_cover, genus_species=Taxon)%>%
+  mutate(exp_unit=paste(site_code, block, plot, trt, year, sep='::'))%>%
+  filter(!(genus_species %in% c('GROUND', 'OTHER LITTER', 'OTHER ARISTIDA CONTORTA (DEAD)', 'OTHER SALSOLA KALI (DEAD)', 'OTHER TRIODIA BASEDOWII (DEAD)')))
 
 #############################################
 #####calculate Cmax (codominance metric)#####
 
 #calculate relative abundance
-relCover <- GEx%>%
+relCover <- nutnet%>%
   group_by(exp_unit)%>%
   summarise(totcov=sum(cover))%>%
   ungroup()%>%
-  right_join(GEx)%>%
+  right_join(nutnet)%>%
   mutate(relcov=(cover/totcov)*100)%>%
   select(-cover, -totcov)
 
@@ -45,13 +44,14 @@ rankOrder <- relCover%>%
 
 ###calculating harmonic means for all subsets of rank orders
 #make a new dataframe with just the label
-expUnit=GEx%>%
+expUnit=nutnet%>%
   select(exp_unit)%>%
   unique()
 
 #makes an empty dataframe
 harmonicMean=data.frame(row.names=1) 
 
+### NOTE: this code takes about 30 mins to run, so use the output in the dropbox unless there is a reason to re-run it
 #calculate harmonic means
 for(i in 1:length(expUnit$exp_unit)) {
   
@@ -80,7 +80,7 @@ differenceData <- harmonicMean%>%
   left_join(rankOrder)%>%
   filter(rank==num_ranks+1)%>% #only keep the next most abundant species after the number that went into the calculation of the harmonic mean
   mutate(difference=harmonic_mean-relcov) #calculates difference between harmonic mean and the relative cover of the next most abundant species
-  
+
 Cmax <- differenceData%>%
   group_by(exp_unit)%>%
   summarise(Cmax=max(difference))%>%
@@ -91,7 +91,7 @@ Cmax <- differenceData%>%
   select(exp_unit, Cmax, num_codominants)%>%
   mutate(exp_unit2=exp_unit)%>%
   separate(exp_unit2, into=c('site', 'block', 'plot', 'trt', 'year'), sep='::')%>%
-  mutate(plot=as.integer(plot), year=as.integer(year))
+  mutate(plot=as.integer(plot), year=as.integer(year), block=as.integer(block))
 
 codomSppList <- Cmax%>%
   left_join(rankOrder)%>%
@@ -99,15 +99,15 @@ codomSppList <- Cmax%>%
   filter(rank<=num_codominants)%>%
   ungroup()
 
-# write.csv(codomSppList, 'GEx_codominants_list_06092020.csv', row.names=F)
+#write.csv(codomSppList, 'NutNet_codominants_list_06092020.csv', row.names=F)
 
 #histogram of codom
-ggplot(data=codomSppList, aes(x=num_codominants)) +
+ggplot(data=subset(codomSppList, year_trt==0), aes(x=num_codominants)) +
   geom_histogram(color="black", fill="white", binwidth=1) +
   xlab('Number of Codominant Species') + ylab('Count')
 #export at 1000x800
 
-ggplot(data=codomSppList, aes(x=Cmax, y=num_codominants)) +
+ggplot(data=subset(codomSppList, year_trt==0), aes(x=Cmax, y=num_codominants)) +
   geom_point() +
   xlab('Cmax') + ylab('Number of Codominants')
 #export at 800x800
@@ -116,13 +116,14 @@ ggplot(data=codomSppList, aes(x=Cmax, y=num_codominants)) +
 ###what drives codominance?
 
 #read in site-level data
-siteData <- read.csv('GEx-metadata-with-other-env-layers-v2.csv')%>%
-  select(-X)%>%
-  rename(plant_gamma=sprich, Ndep=N.deposition1993, latitude=Final.Lat, longitude=Final.Long, MAT=bio1, temp_range=bio7, MAP=bio12, precip_cv=bio15)
+siteData <- read.csv('comb-by-plot-clim-soil-diversity-03-Jun-2020.csv')%>%
+  select(site_code, continent, country, region, managed, burned, grazed, anthropogenic, habitat, elevation, latitude, longitude, site_richness, MAT_v2, ANN_TEMP_RANGE_v2, MAP_v2, MAP_VAR_v2, N_Dep, experiment_type, year, year_trt, first_nutrient_year, first_fenced_year, site_native_richness, site_introduced_richness)%>%
+  unique()%>%
+  rename(site=site_code, plant_gamma=site_richness, MAT=MAT_v2, temp_range=ANN_TEMP_RANGE_v2, MAP=MAP_v2, precip_cv=MAP_VAR_v2, Ndep=N_Dep)
 
 #get site-level average cmax and number of codominants
 CmaxDrivers <- Cmax%>%
-  group_by(site, block, year, trt)%>%
+  group_by(site, year, trt, block)%>%
   summarise(num_codominants=mean(num_codominants), Cmax=mean(Cmax))%>%
   ungroup()%>%
   group_by(site, year, trt)%>%
@@ -130,7 +131,7 @@ CmaxDrivers <- Cmax%>%
   ungroup()%>%
   left_join(siteData)
 
-# write.csv(CmaxDrivers, 'GEx_codominance_06092020.csv', row.names=F)
+# write.csv(CmaxDrivers, 'NutNet_codominance_06092020.csv', row.names=F)
 
 ggplot(data=CmaxDrivers, aes(x=Cmax, y=num_codominants)) +
   geom_point() +
