@@ -3,7 +3,7 @@ library(codyn)
 library(rsq)
 library(vegan)
 
-setwd("C:\\Users\\mavolio2\\Dropbox\\Dominance WG\\")
+setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
 
 dat<-read.csv("All_Cleaned_April2019_V2.csv")
 
@@ -24,9 +24,11 @@ lsyear2<-lsyear%>%
            site_block!="California_Sedgwick_Lisque##B"&
            site_block!="California_Sedgwick_Lisque##G"&
            site_block!="DesertLow##Alkali"&
-           site!="Jornada"&
-           site!="Junner Koeland"&
-           site!="Konza")
+           site!="Jornada")%>%#&
+           #site!="Junner Koeland"&
+           #site!="Konza")
+            group_by(site, block, site_block, trt, exage, genus_species)%>%
+  summarize(relcov=mean(relcov))
 
 numreps<-lsyear%>%
   select(site, block)%>%
@@ -36,7 +38,7 @@ numreps<-lsyear%>%
 
 lsyear2.2<-lsyear2%>%
   left_join(numreps)%>%
-  filter(num>4)
+  filter(num>2)
 
 gex_permanova<-data.frame()
 sitelist<-unique(lsyear2.2$site)
@@ -45,16 +47,18 @@ sitelist<-unique(lsyear2.2$site)
 for (i in 1:length(sitelist)){
   
   subset<-lsyear2.2%>%
+    filter(site=="Konza") 
+    
     filter(site==sitelist[i]) 
   
   wide<-subset%>%
     spread(genus_species, relcov, fill=0)
   
-  species<-wide[,12:ncol(wide)]
+  species<-wide[,7:ncol(wide)]
   
-  env<-wide[,1:11]
-  out <- adonis(species~trt, data=env, method="bray", strata=env$block)
-  #adonis(wide[,12:ncol(wide)]~trt, wide, strata = wide$block) this does the same thing
+  env<-wide[,1:6]
+  #out <- adonis(species~trt, data=env, method="bray", strata=env$block)
+  adonis(wide[,12:ncol(wide)]~trt, wide, strata = wide$block)# this does the same thing
   
   perm_out <- data.frame(
     site = sitelist[i],
@@ -69,14 +73,14 @@ test2<-gex_permanova%>%
 
 ## look at NMDS to see gut check
 msub<-lsyear2.2%>%
-  filter(site=="Argentina_ElPalmar") 
+  filter(site=="Konza") 
 
 mwide<-msub%>%
   spread(genus_species, relcov, fill=0)
 
-species<-mwide[,12:ncol(mwide)]
+species<-mwide[,7:ncol(mwide)]
 
-env<-mwide[,1:11]
+env<-mwide[,1:6]
 
 
 mds<-metaMDS(species, distance = "bray")
@@ -108,7 +112,11 @@ lsyear3<-lsyear%>%
            site_block_plot!="Jornada##west##19"&
            site_block_plot!="Jornada##west##20"&
            site_block_plot!="Jornada##west##21"&
-           site_block_plot!="Jornada##west##22")
+           site_block_plot!="Jornada##west##22")%>%
+  select(site, block, plot)%>%
+  unique()
+
+
 
 gex_multdiff2<-data.frame()
 siteblockplot<-unique(lsyear3$site_block_plot)

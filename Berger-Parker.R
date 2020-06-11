@@ -166,6 +166,6 @@ ggplot(data=toplot_all, aes(x=diff_sp, y=mean, fill=type))+
   geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci), position=position_dodge(0.9), width=0.5)+
   geom_hline(yintercept = 0)+
   xlab("")+
-  ylab("Change in Dominance")+
+  ylab("Difference in Dominance")+
   #scale_x_discrete(labels=c("No Change", "Change", "All Data"))+ can't get this to work for some reason
   scale_fill_manual(name="Dominant\nSpecies Identity", values=c("blue", "red"), labels=c("Absolute Value", "Raw Value"))
