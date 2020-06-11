@@ -145,12 +145,11 @@ toplot$site2 <- factor(toplot$site, levels = toplot$site[order(toplot$mean)])
 
 ggplot(data=toplot, aes(x=site2, y=mean, color=as.factor(sig)))+
   geom_point()+
-  scale_color_manual(values=c("black", "red"))+
+  scale_color_manual(values=c("black", "red"), name="Sig. Permanova", labels=c("No", "Yes"))+
   geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci))+
   coord_flip()+
   xlab("Site")+
   ylab("Compositional Difference")+
   #scale_y_continuous(limits = c(0,1))+
   theme(axis.text.y=element_blank(),
-        axis.ticks.y = element_blank(),
-        legend.position = "none")
+        axis.ticks.y = element_blank())
