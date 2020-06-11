@@ -19,15 +19,17 @@ lsyear<-dat%>%
   filter(year==lyear, mexage==exage)%>%
   mutate(site_block=paste(site, block, sep="##"))
 
+#dropping probelmatic blocks and averaging over experiments where there are several blocks in a plot. 
+#Averaging up to a block for Konza, Junner Koeland, and Jornada sites.
+
 lsyear2<-lsyear%>%
   filter(site_block!="California_Sedgwick_Lisque##A"&
            site_block!="California_Sedgwick_Lisque##B"&
            site_block!="California_Sedgwick_Lisque##G"&
-           site_block!="DesertLow##Alkali"&
-           site!="Jornada")%>%#&
-           #site!="Junner Koeland"&
-           #site!="Konza")
+           site_block!="DesertLow##Alkali")%>%
             group_by(site, block, site_block, trt, exage, genus_species)%>%
+  summarize(relcov=mean(relcov))%>%
+  group_by(site, block, exage, year, trt, genus_species, site_block)%>%
   summarize(relcov=mean(relcov))
 
 numreps<-lsyear%>%
