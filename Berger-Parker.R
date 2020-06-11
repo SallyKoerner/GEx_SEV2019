@@ -12,7 +12,7 @@ setwd("C:\\Users\\mavolio2\\Dropbox\\Dominance WG\\")
 setwd("~/Dropbox/GEx_VirtualWorkshop_June2020")
 
 
-dat<-read.csv("GEx_cleaned_10June2020.csv")%>%
+dat<-read.csv("GEx_cleaned_11June2020.csv")%>%
   mutate(site_block=paste(site, block, sep="##"))
 
 ###all years of data
@@ -38,7 +38,7 @@ dat3<-dat%>%
            site_block_plot!="Jornada##west##20"&
            site_block_plot!="Jornada##west##21"&
            site_block_plot!="Jornada##west##22")%>%
-  group_by(site, year, exage, block, trt, genus_species, site_block)%>%
+  group_by(site, year, exage, block, trt, genus_species_use, site_block)%>%
   summarise(relcov=mean(relcov))
 
 dat4<-dat2%>%
@@ -60,26 +60,25 @@ dat5<-dat4%>%
 graze<-dat5%>%
   ungroup()%>%
   filter(trt=="G")%>%
-  rename(graze_sp=genus_species,
-         graze_bp=relcov,
-         graze_clean_ejf=clean_ejf)%>%
-  select(-trt)
+  rename(graze_sp=genus_species_use,
+         graze_bp=relcov)%>%
+  select(-trt, -genus_species, - genus_species_clean)
 
 ungraze<-dat5%>%
   ungroup()%>%
   filter(trt=="U")%>%
-  rename(ungraze_sp=genus_species,
-         ungraze_bp=relcov, ungraze_clean_ejf=clean_ejf)%>%
-  select(-trt)
+  rename(ungraze_sp=genus_species_use,
+         ungraze_bp=relcov)%>%
+  select(-trt, -genus_species, - genus_species_clean)
 
 diffG_U<-ungraze%>%
   left_join(graze)%>%
   na.omit%>%
   mutate(bp_rr=log(graze_bp/ungraze_bp),
-         diff_sp=ifelse(graze_clean_ejf==ungraze_clean_ejf, 0, 1))
+         diff_sp=ifelse(graze_sp==ungraze_sp, 0, 1))
 
 ##this is the file that beth and ben want
-#write.csv(diffG_U, "Diff_BP_Dom_allyrs.csv")
+write.csv(diffG_U, "Diff_BP_Dom_allyrs.csv")
 
 ###using the last year only for the figure
 diffG_U.lyr<-diffG_U%>%
