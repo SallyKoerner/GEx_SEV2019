@@ -89,7 +89,7 @@ diffG_U.lyr<-diffG_U%>%
   filter(year==lyear, mexage==exage)
 
 #how many see a change in dom sp?
-sum(diffG_U.lyr$diff_sp)/573
+sum(diffG_U.lyr$diff_sp)/551
 
 diffG_U.lyr_mean<-diffG_U.lyr%>%
   group_by(site)%>%
