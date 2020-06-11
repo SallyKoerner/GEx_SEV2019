@@ -4,9 +4,20 @@ library(rsq)
 
 setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
 
-dat<-read.csv("GEx_cleaned_10June2020.csv")
+dat<-read.csv("GEx_cleaned_11June2020.csv")
 
-lsyear<-dat%>%
+##clean the data
+baddata<-dat%>%
+  filter(is.na(genus_species_clean))%>%
+  select(site, block, genus_species_use)%>%
+  unique
+
+dat2<-dat%>%
+  mutate(drop=ifelse(genus_species_use=="#N/A"|genus_species_use=="Dead unidentified"|genus_species_use=="Leaf.Litter"|genus_species_use=="cactus__dead_", 1, 0))%>%
+  filter(drop!=1)
+
+
+lsyear<-dat2%>%
   group_by(site) %>% 
   mutate(lyear=max(year),
          mexage=max(exage))%>%
@@ -21,7 +32,7 @@ lsyear2<-lsyear%>%
            site_block!="California_Sedgwick_Lisque##B"&
            site_block!="California_Sedgwick_Lisque##G"&
            site_block!="DesertLow##Alkali")%>%
-  group_by(site, block, exage, year, trt, genus_species, site_block)%>%
+  group_by(site, block, exage, year, trt, genus_species_use, site_block)%>%
   summarize(relcov=mean(relcov))
 
 gex_multdiff<-data.frame()
@@ -33,7 +44,7 @@ for (i in 1:length(siteblock)){
     filter(site_block==siteblock[i]) %>%
     mutate(treatment=trt)
   
-  out <- multivariate_difference(subset, species.var="genus_species", abundance.var = "relcov", replicate.var = "trt", treatment.var = "treatment")
+  out <- multivariate_difference(subset, species.var="genus_species_use", abundance.var = "relcov", replicate.var = "trt", treatment.var = "treatment")
   
   out$site_block<-siteblock[i]
   
@@ -64,7 +75,7 @@ for (i in 1:length(siteblock)){
     filter(site_block==siteblock[i]) %>%
     mutate(treatment=trt)
   
-  out <- RAC_difference(subset, species.var="genus_species", abundance.var = "relcov", replicate.var = "trt", treatment.var = "treatment")
+  out <- RAC_difference(subset, species.var="genus_species_use", abundance.var = "relcov", replicate.var = "trt", treatment.var = "treatment")
   
   out$site_block<-siteblock[i]
   
