@@ -6,13 +6,14 @@ theme_set(theme_bw(12))
 
 #do this with last year for the figure
 #do for all years to export email to beth and ben, figure out if I am using the right folder
-
-
+###Meghan's Working Directory
 setwd("C:\\Users\\mavolio2\\Dropbox\\Dominance WG\\")
+##Sally's Working Directory
+setwd("~/Dropbox/GEx_VirtualWorkshop_June2020")
 
-dat<-read.csv("ALL_Cleaned_Apr2019.csv")%>%
-  mutate(site_block=paste(site, block, sep="##"))%>%
-  select(-X)
+
+dat<-read.csv("GEx_cleaned_10June2020.csv")%>%
+  mutate(site_block=paste(site, block, sep="##"))
 
 ###all years of data
 dat2<-dat%>%
@@ -60,92 +61,32 @@ graze<-dat5%>%
   ungroup()%>%
   filter(trt=="G")%>%
   rename(graze_sp=genus_species,
-         graze_bp=relcov)%>%
+         graze_bp=relcov,
+         graze_clean_ejf=clean_ejf)%>%
   select(-trt)
 
 ungraze<-dat5%>%
   ungroup()%>%
   filter(trt=="U")%>%
   rename(ungraze_sp=genus_species,
-         ungraze_bp=relcov)%>%
+         ungraze_bp=relcov, ungraze_clean_ejf=clean_ejf)%>%
   select(-trt)
 
 diffG_U<-ungraze%>%
   left_join(graze)%>%
   na.omit%>%
   mutate(bp_rr=log(graze_bp/ungraze_bp),
-         diff_sp=ifelse(graze_sp==ungraze_sp, 0, 1))
+         diff_sp=ifelse(graze_clean_ejf==ungraze_clean_ejf, 0, 1))
 
 ##this is the file that beth and ben want
 write.csv(diffG_U, "Diff_BP_Dom_allyrs.csv")
 
 ###using the last year only for the figure
-lsyear<-dat%>%
+diffG_U.lyr<-diffG_U%>%
   group_by(site) %>% 
   mutate(lyear=max(year),
          mexage=max(exage))%>%
   filter(year==lyear, mexage==exage)
-
-dat2.lyr<-lsyear%>%
-  filter(site_block!="California_Sedgwick_Lisque##A"&
-           site_block!="California_Sedgwick_Lisque##B"&
-           site_block!="California_Sedgwick_Lisque##G"&
-           site_block!="DesertLow##Alkali"&
-           site!="Jornada"&
-           site!="Junner Koeland"&
-           site!="Konza")%>%
-  select(-plot)
-
-
-dat3.lyr<-lsyear%>%
-  filter(site=="Jornada"|
-           site=="Junner Koeland"|
-           site=="Konza")%>%
-  mutate(site_block_plot=paste(site_block, plot, sep="##"))%>%
-  filter(site_block_plot!="Jornada##east##30"&
-           site_block_plot!="Jornada##west##18"&
-           site_block_plot!="Jornada##west##19"&
-           site_block_plot!="Jornada##west##20"&
-           site_block_plot!="Jornada##west##21"&
-           site_block_plot!="Jornada##west##22")%>%
-  group_by(site, year, exage, block, trt, genus_species, site_block)%>%
-  summarise(relcov=mean(relcov))
-
-dat4.lyr<-dat2.lyr%>%
-  bind_rows(dat3.lyr)%>%
-  group_by(site, block, year, trt)%>%
-  mutate(dom=max(relcov))%>%
-  filter(dom==relcov)
-
-#we are dropping sites that have multiple dominant species in a block
-keep.lyr<-dat4.lyr%>%
-  group_by(site, block, year, trt)%>%
-  summarize(n=length(relcov))%>%
-  filter(n<2)
-
-dat5.lyr<-dat4.lyr%>%
-  right_join(keep.lyr)%>%
-  select(-site_block, -lyear, -mexage, -dom, -n)
-
-graze.lyr<-dat5.lyr%>%
-  ungroup()%>%
-  filter(trt=="G")%>%
-  rename(graze_sp=genus_species,
-         graze_bp=relcov)%>%
-  select(-trt)
-
-ungraze.lyr<-dat5.lyr%>%
-  ungroup()%>%
-  filter(trt=="U")%>%
-  rename(ungraze_sp=genus_species,
-         ungraze_bp=relcov)%>%
-  select(-trt)
-
-diffG_U.lyr<-ungraze.lyr%>%
-  left_join(graze.lyr)%>%
-  na.omit%>%
-  mutate(bp_rr=log(graze_bp/ungraze_bp),
-         diff_sp=ifelse(graze_sp==ungraze_sp, 0, 1))
 
 #how many see a change in dom sp?
 sum(diffG_U.lyr$diff_sp)/573
@@ -172,7 +113,7 @@ ggplot(data=toplot, aes(x=site2, y=bp_rr, color=as.factor(diff_sp)))+
   theme(axis.text.y=element_blank(),
         axis.ticks.y = element_blank())+
   annotate("text", x=200, y=-1.25, label="Herbivores decrease\ndominance")+
-  annotate("text", x=60, y=1.25, label="Herbivores increase\ndominance")
+  annotate("text", x=60, y=1.1, label="Herbivores increase\ndominance")
 
 ##make a six bar chart for abs and raw, for no change, change, and global. This is the figure mendy wants
 overall<-toplot%>%
@@ -186,9 +127,11 @@ overall<-toplot%>%
          se_glob=sd_glob/sqrt(n),
          ci_abs=se_abs*1.96,
          ci_glob=se_glob*1.96)%>%
-  select(diff_sp, abs, global, ci_abs, ci_glob)
+  select(diff_sp, abs, global, ci_abs, ci_glob) %>% 
+  ungroup()
 
 overall2<-toplot%>%
+  ungroup() %>% 
   summarize(abs=mean(abs(bp_rr)),
             global=mean(bp_rr),
             sd_abs=sd(abs(bp_rr)),
