@@ -5,7 +5,12 @@ library(vegan)
 
 setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
 
-dat<-read.csv("All_Cleaned_April2019_V2.csv")
+dat<-read.csv("GEx_cleaned_11June2020.csv")
+
+dat2<-dat%>%
+  mutate(drop=ifelse(genus_species_use=="#N/A"|genus_species_use=="Dead unidentified"|genus_species_use=="Leaf.Litter"|genus_species_use=="cactus__dead_", 1, 0))%>%
+  filter(drop!=1)
+
 
 exage<-dat%>%
   select(site, exage)%>%
