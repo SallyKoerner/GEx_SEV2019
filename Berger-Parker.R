@@ -13,7 +13,9 @@ setwd("~/Dropbox/GEx_VirtualWorkshop_June2020")
 
 
 dat<-read.csv("GEx_cleaned_11June2020.csv")%>%
-  mutate(site_block=paste(site, block, sep="##"))
+  mutate(site_block=paste(site, block, sep="##")) %>% 
+  mutate(drop=ifelse(genus_species_use=="#N/A"|genus_species_use=="Dead unidentified"|genus_species_use=="Leaf.Litter"|genus_species_use=="cactus__dead_", 1, 0))%>%
+  filter(drop!=1)
 
 ###all years of data
 dat2<-dat%>%
@@ -88,7 +90,7 @@ diffG_U.lyr<-diffG_U%>%
   filter(year==lyear, mexage==exage)
 
 #how many see a change in dom sp?
-sum(diffG_U.lyr$diff_sp)/570
+sum(diffG_U.lyr$diff_sp)/561
 
 diffG_U.lyr_mean<-diffG_U.lyr%>%
   group_by(site)%>%
