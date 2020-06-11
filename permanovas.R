@@ -3,6 +3,8 @@ library(codyn)
 library(rsq)
 library(vegan)
 
+theme_set(theme_bw(12))
+
 setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
 
 dat<-read.csv("GEx_cleaned_11June2020.csv")
@@ -10,7 +12,6 @@ dat<-read.csv("GEx_cleaned_11June2020.csv")
 dat2<-dat%>%
   mutate(drop=ifelse(genus_species_use=="#N/A"|genus_species_use=="Dead unidentified"|genus_species_use=="Leaf.Litter"|genus_species_use=="cactus__dead_", 1, 0))%>%
   filter(drop!=1)
-
 
 exage<-dat%>%
   select(site, exage)%>%
@@ -32,9 +33,7 @@ lsyear2<-lsyear%>%
            site_block!="California_Sedgwick_Lisque##B"&
            site_block!="California_Sedgwick_Lisque##G"&
            site_block!="DesertLow##Alkali")%>%
-            group_by(site, block, site_block, trt, exage, genus_species)%>%
-  summarize(relcov=mean(relcov))%>%
-  group_by(site, block, exage, year, trt, genus_species, site_block)%>%
+           group_by(site, block, site_block, trt, exage, genus_species_use)%>%
   summarize(relcov=mean(relcov))
 
 numreps<-lsyear%>%
@@ -45,7 +44,7 @@ numreps<-lsyear%>%
 
 lsyear2.2<-lsyear2%>%
   left_join(numreps)%>%
-  filter(num>2)
+  filter(num>3)
 
 gex_permanova<-data.frame()
 sitelist<-unique(lsyear2.2$site)
@@ -54,18 +53,15 @@ sitelist<-unique(lsyear2.2$site)
 for (i in 1:length(sitelist)){
   
   subset<-lsyear2.2%>%
-    filter(site=="Konza") 
-    
     filter(site==sitelist[i]) 
   
   wide<-subset%>%
-    spread(genus_species, relcov, fill=0)
+    spread(genus_species_use, relcov, fill=0)
   
-  species<-wide[,7:ncol(wide)]
-  
-  env<-wide[,1:6]
-  #out <- adonis(species~trt, data=env, method="bray", strata=env$block)
-  adonis(wide[,12:ncol(wide)]~trt, wide, strata = wide$block)# this does the same thing
+  #species<-wide[,7:ncol(wide)]
+  #env<-wide[,1:6]
+  out <- adonis(wide[,12:ncol(wide)]~trt, wide, strata = wide$block)
+
   
   perm_out <- data.frame(
     site = sitelist[i],
@@ -75,55 +71,86 @@ for (i in 1:length(sitelist)){
    gex_permanova<-rbind(gex_permanova, perm_out)  
 }
 
-test2<-gex_permanova%>%
-  left_join(numreps)
 
-## look at NMDS to see gut check
-msub<-lsyear2.2%>%
-  filter(site=="Konza") 
-
-mwide<-msub%>%
-  spread(genus_species, relcov, fill=0)
-
-species<-mwide[,7:ncol(mwide)]
-
-env<-mwide[,1:6]
-
-
-mds<-metaMDS(species, distance = "bray")
-
-scores <- data.frame(scores(mds, display="sites"))  # Extracts NMDS scores 
-scores2<- cbind(env, scores) # binds the NMDS scores of year i to all years previously run
-
-ggplot(scores2, aes(x=NMDS1, y=NMDS2, color=trt, shape=block))+
-  geom_point(size=5)
-
-####ignore below
-permanova_out_mod <- permanova_out_master %>%
-  mutate(pval_flag_perm = ifelse(perm_Pvalue<.05, 1, 0)) %>%
-  mutate(pval_flag_disp = ifelse(disp_Pvalue<.05, 1, 0)) %>%
-  mutate(permanova="permanova") %>%
-  group_by(site_project_comm, treatment) %>%
-  summarise(tot_pval=sum(pval_flag)) %>%
-  filter(tot_pval != 0)
-
-##three sites, konza, jornada and junner koeland, had plots nested in block. need to use that informaiton here.
-
-lsyear3<-lsyear%>%
-  filter(site=="Jornada"|
-           site=="Junner Koeland"|
-           site=="Konza")%>%
-  mutate(site_block_plot=paste(site_block, plot, sep="##"))%>%
-  filter(site_block_plot!="Jornada##east##30"&
-           site_block_plot!="Jornada##west##18"&
-           site_block_plot!="Jornada##west##19"&
-           site_block_plot!="Jornada##west##20"&
-           site_block_plot!="Jornada##west##21"&
-           site_block_plot!="Jornada##west##22")%>%
-  select(site, block, plot)%>%
-  unique()
+# ## look at NMDS to see gut check
+# msub<-lsyear2.2%>%
+#   filter(site=="Konza") 
+# 
+# mwide<-msub%>%
+#   spread(genus_species, relcov, fill=0)
+# 
+# species<-mwide[,7:ncol(mwide)]
+# 
+# env<-mwide[,1:6]
+# 
+# 
+# mds<-metaMDS(species, distance = "bray")
+# 
+# scores <- data.frame(scores(mds, display="sites"))  # Extracts NMDS scores 
+# scores2<- cbind(env, scores) # binds the NMDS scores of year i to all years previously run
+# 
+# ggplot(scores2, aes(x=NMDS1, y=NMDS2, color=trt, shape=block))+
+#   geom_point(size=5)
 
 
 
-gex_multdiff2<-data.frame()
-siteblockplot<-unique(lsyear3$site_block_plot)
+###making comp diff shoowsh figure
+comp<-read.csv("gex_multdiff_site_block.csv")
+
+#getting CI for each site
+gex_multdiff_CI<-comp%>%
+  group_by(site) %>% 
+  summarize_at(vars(composition_diff), funs(mean, sd, length)) %>% 
+  mutate(se=sd/sqrt(length),
+         ci=se*1.96)
+
+#geting global mean comp diff
+mean<-mean(gex_multdiff_CI$mean)
+sd<-sd(gex_multdiff_CI$mean)
+se<-sd/sqrt(252)
+ci<-se*1.96
+site<-"All Sites"
+
+all<- data.frame(site, mean, sd, se, ci)
+
+gex_multdiff_CI <- gex_multdiff_CI[order(gex_multdiff_CI$mean), ]  # sort
+gex_multdiff_CI2<-gex_multdiff_CI%>%
+  bind_rows(all)%>%
+  mutate(colortrt=ifelse(site=="All Sites", 1,0))
+gex_multdiff_CI2$site2 <- factor(gex_multdiff_CI2$site, levels = gex_multdiff_CI2$site)
+
+
+ggplot(data=gex_multdiff_CI2, aes(x=site2, y=mean, color=as.factor(colortrt)))+
+  geom_point()+
+  scale_color_manual(values=c("black", "red"))+
+  geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci))+
+  coord_flip()+
+  xlab("Site")+
+  ylab("Compositional Difference")+
+  #scale_y_continuous(limits = c(0,1))+
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.position = "none")
+
+###making comp diff sig figure based on permanovas
+
+####flagging sig values
+permsig <- gex_permanova %>%
+  mutate(sig = ifelse(perm_Pvalue<.1, 1, 0))
+
+toplot<-gex_multdiff_CI%>%
+  right_join(permsig)
+
+toplot$site2 <- factor(toplot$site, levels = toplot$site[order(toplot$mean)])
+
+ggplot(data=toplot, aes(x=site2, y=mean, color=as.factor(sig)))+
+  geom_point()+
+  scale_color_manual(values=c("black", "red"))+
+  geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci))+
+  coord_flip()+
+  xlab("Site")+
+  ylab("Compositional Difference")+
+  #scale_y_continuous(limits = c(0,1))+
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.position = "none")
