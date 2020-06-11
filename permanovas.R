@@ -44,7 +44,7 @@ numreps<-lsyear%>%
 
 lsyear2.2<-lsyear2%>%
   left_join(numreps)%>%
-  filter(num>3)
+  filter(num>4)
 
 gex_permanova<-data.frame()
 sitelist<-unique(lsyear2.2$site)
@@ -72,25 +72,25 @@ for (i in 1:length(sitelist)){
 }
 
 
-# ## look at NMDS to see gut check
-# msub<-lsyear2.2%>%
-#   filter(site=="Konza") 
-# 
-# mwide<-msub%>%
-#   spread(genus_species, relcov, fill=0)
-# 
-# species<-mwide[,7:ncol(mwide)]
-# 
-# env<-mwide[,1:6]
-# 
-# 
-# mds<-metaMDS(species, distance = "bray")
-# 
-# scores <- data.frame(scores(mds, display="sites"))  # Extracts NMDS scores 
-# scores2<- cbind(env, scores) # binds the NMDS scores of year i to all years previously run
-# 
-# ggplot(scores2, aes(x=NMDS1, y=NMDS2, color=trt, shape=block))+
-#   geom_point(size=5)
+## look at NMDS to see gut check
+msub<-lsyear2.2%>%
+  filter(site=="AUS_Savernake")
+
+mwide<-msub%>%
+  spread(genus_species_use, relcov, fill=0)
+
+species<-mwide[,7:ncol(mwide)]
+
+env<-mwide[,1:6]
+
+
+mds<-metaMDS(species, distance = "bray")
+
+scores <- data.frame(scores(mds, display="sites"))  # Extracts NMDS scores
+scores2<- cbind(env, scores) # binds the NMDS scores of year i to all years previously run
+
+ggplot(scores2, aes(x=NMDS1, y=NMDS2, color=trt, shape=block))+
+  geom_point(size=5)
 
 
 
