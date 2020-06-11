@@ -79,7 +79,7 @@ diffG_U<-ungraze%>%
          diff_sp=ifelse(graze_clean_ejf==ungraze_clean_ejf, 0, 1))
 
 ##this is the file that beth and ben want
-write.csv(diffG_U, "Diff_BP_Dom_allyrs.csv")
+#write.csv(diffG_U, "Diff_BP_Dom_allyrs.csv")
 
 ###using the last year only for the figure
 diffG_U.lyr<-diffG_U%>%
