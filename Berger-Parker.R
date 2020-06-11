@@ -79,7 +79,7 @@ diffG_U<-ungraze%>%
          diff_sp=ifelse(graze_clean_ejf==ungraze_clean_ejf, 0, 1))
 
 ##this is the file that beth and ben want
-write.csv(diffG_U, "Diff_BP_Dom_allyrs.csv")
+#write.csv(diffG_U, "Diff_BP_Dom_allyrs.csv")
 
 ###using the last year only for the figure
 diffG_U.lyr<-diffG_U%>%
@@ -89,7 +89,7 @@ diffG_U.lyr<-diffG_U%>%
   filter(year==lyear, mexage==exage)
 
 #how many see a change in dom sp?
-sum(diffG_U.lyr$diff_sp)/573
+sum(diffG_U.lyr$diff_sp)/551
 
 diffG_U.lyr_mean<-diffG_U.lyr%>%
   group_by(site)%>%
