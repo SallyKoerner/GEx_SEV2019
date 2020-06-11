@@ -5,7 +5,12 @@ library(vegan)
 
 setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
 
-dat<-read.csv("All_Cleaned_April2019_V2.csv")
+dat<-read.csv("GEx_cleaned_11June2020.csv")
+
+dat2<-dat%>%
+  mutate(drop=ifelse(genus_species_use=="#N/A"|genus_species_use=="Dead unidentified"|genus_species_use=="Leaf.Litter"|genus_species_use=="cactus__dead_", 1, 0))%>%
+  filter(drop!=1)
+
 
 exage<-dat%>%
   select(site, exage)%>%
@@ -19,15 +24,17 @@ lsyear<-dat%>%
   filter(year==lyear, mexage==exage)%>%
   mutate(site_block=paste(site, block, sep="##"))
 
+#dropping probelmatic blocks and averaging over experiments where there are several blocks in a plot. 
+#Averaging up to a block for Konza, Junner Koeland, and Jornada sites.
+
 lsyear2<-lsyear%>%
   filter(site_block!="California_Sedgwick_Lisque##A"&
            site_block!="California_Sedgwick_Lisque##B"&
            site_block!="California_Sedgwick_Lisque##G"&
-           site_block!="DesertLow##Alkali"&
-           site!="Jornada")%>%#&
-           #site!="Junner Koeland"&
-           #site!="Konza")
+           site_block!="DesertLow##Alkali")%>%
             group_by(site, block, site_block, trt, exage, genus_species)%>%
+  summarize(relcov=mean(relcov))%>%
+  group_by(site, block, exage, year, trt, genus_species, site_block)%>%
   summarize(relcov=mean(relcov))
 
 numreps<-lsyear%>%
