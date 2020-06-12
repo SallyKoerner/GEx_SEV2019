@@ -47,12 +47,12 @@ shoosh<-
   geom_point(aes(size=as.factor(size)))+
   scale_size_manual(values=c(1, 3.5))+
   scale_color_manual(values=c("black", "green4", "dodgerblue", "red", "orange"))+
-  geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci))+
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se))+
   geom_point(data=highlight, aes(x=site2, y= mean, color=as.factor(colortrt)), size=3.5)+
   coord_flip()+
   xlab("Site")+
   ylab("Compositional Difference")+
-  #scale_y_continuous(limits = c(0,1))+
+  scale_y_continuous(limits = c(0,1))+
   theme(axis.text.y=element_blank(),
         axis.ticks.y = element_blank(),
         legend.position = "none",
@@ -159,7 +159,7 @@ lsub<-lsyear2%>%
 lwide<-lsub%>%
   spread(genus_species_use, relcov, fill=0)
 
-lspecies<-lwide[,6:ncol(wide)]
+lspecies<-lwide[,6:ncol(lwide)]
 
 lenv<-lwide[,1:5]
 
