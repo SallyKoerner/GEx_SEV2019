@@ -86,13 +86,14 @@ toplot_all<-overall%>%
   mutate(keep=ifelse(type=="abs"&ci_type=='ci_abs', 1, ifelse(type=="global"&ci_type=="ci_glob", 1, 0)))%>%
   filter(keep==1)
 
+#replace with points? change black color.
 means<-
 ggplot(data=toplot_all, aes(x=type, y=mean, fill=as.factor(diff_sp)))+
   geom_bar(stat = "identity", position = position_dodge(0.9))+
   geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci), position=position_dodge(0.9), width=0.5)+
   geom_hline(yintercept = 0)+
   xlab("")+
-  ylab("Change in Dominance")+
+  ylab("Difference in Dominance")+
   scale_x_discrete(labels=c("Absolute Value", "Raw Value"))+
   scale_fill_manual(name="Dominant\nSpecies Identity", values=c("blue", "red", "black"), labels=c("No Change", "Change", "All Data"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
