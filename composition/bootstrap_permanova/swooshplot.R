@@ -53,7 +53,6 @@ swoosh_plot <-
              shape = as.factor(is_boot)
            )) +
       theme_classic() +
-      geom_point() +
       scale_color_manual(
         values = c("black", "red"),
         name = "Permanova p < 0.05",
@@ -64,14 +63,16 @@ swoosh_plot <-
         values = c(16, 1),
         labels = c("No", "Yes")
       ) +
-      geom_errorbar(aes(ymin = mean - ci, ymax = mean + ci)) +
+      geom_errorbar(aes(ymin = mean - se, ymax = mean + se)) +
       coord_flip() +
       xlab("Site") +
       ylab("Compositional Difference") +
       theme(axis.text.y = element_blank(),
             axis.ticks.y = element_blank()) +
       theme(legend.position = c(0.95, 0.05),
-            legend.justification = c(1, 0))
+            legend.justification = c(1, 0)) +
+      geom_point(color = "white", shape = 16) +
+      geom_point()
     
     ggsave(file = "composition/bootstrap_permanova/out/swooshplot_bootstrap.pdf",
            height = 6,
