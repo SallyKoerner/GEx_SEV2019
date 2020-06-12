@@ -40,11 +40,96 @@ barGraphStats <- function(data, variable, byFactorNames) {
 
 
 ###read in data
-GEx <- read.csv('GEx\\GEx_codominance_06092020.csv')%>%
-  mutate(database=paste('GEx',trt))
+GEx <- read.csv('GEx\\GEx_codominance_06112020.csv')%>%
+  mutate(database=paste('GEx',trt))%>%
+  mutate(method=ifelse(plot.size.shape %in% c('12.25','10 m long (50 points)','120 m long','1440 pin hits','15m long','20 m long','30 m line','60 m long','80 m long'), 'transect', 
+                       ifelse(plot.size.shape %in% c('0.75m2','1 m2','1.25m2','1.4m2','1m2','2 m2','2.5m2','2-4m2','3.5 m2','4 m2','4m2','4m3','4m4','4m5','4m6','4m7','4m8','4m9','5 m2', '5m2'), 'small', 
+                              ifelse(plot.size.shape %in% c('~23m2','10 m2','10m2','12m2','20m2','22.5m2','24m2','25m2','25m2?','8m2'), 'big', ifelse(is.na(plot.size.shape), 'NA', 'huge')))))
 
 nutnet <- read.csv('nutnet\\NutNet_codominance_06092020.csv')%>%
   mutate(database='nutnet')
+
+#nutnet evenness data
+nutnetEven <- read.csv('nutnet\\nutnet_richEven_06122020.csv')%>%
+  separate(exp_unit, into=c('site', 'block', 'plot', 'trt', 'year'), sep='::')%>%
+  mutate(plot=as.integer(plot), year=as.integer(year), block=as.integer(block))%>%
+  group_by(site, block, trt, year)%>%
+  summarise(richness=mean(richness), Evar=mean(Evar))%>%
+  ungroup()%>%
+  group_by(site, trt, year)%>%
+  summarise(richness=mean(richness), Evar=mean(Evar))%>%
+  ungroup()%>%
+  left_join(nutnet)
+
+ggplot(data=subset(nutnetEven, year_trt==0), aes(x=Evar, y=num_codominants)) +
+  geom_point() +
+  xlab('Evar') + ylab('Number of Codominants')
+  
+ggplot(data=subset(nutnetEven, year_trt==0), aes(x=richness, y=num_codominants)) +
+  geom_point() +
+  xlab('Richness') + ylab('Number of Codominants')
+
+
+#nutnet who are codom
+nutnetFam <- read.csv('nutnet\\NutNet_codominants_list_06092020.csv')%>%
+  filter(trt=='Control')%>%
+  group_by(num_codominants, rank, Family)%>%
+  summarise(count=length(Cmax))%>%
+  ungroup()%>%
+  mutate(family_group=ifelse(Family %in% c('Poaceae','Fabaceae','Compositae','Cyperaceae','Rubiaceae','Apiaceae','Geraniaceae'), as.character(Family), 'other'))
+
+ggplot(nutnetFam, aes(x=rank, y=count, fill=family_group)) + 
+  geom_bar(position="fill", stat="identity") +
+  xlab('Rank') + ylab('Proportion') +
+  facet_wrap(~num_codominants)
+
+nutnetFunct <- read.csv('nutnet\\NutNet_codominants_list_06092020.csv')%>%
+  filter(trt=='Control')%>%
+  group_by(num_codominants, rank, functional_group)%>%
+  summarise(count=length(Cmax))%>%
+  ungroup()
+
+ggplot(nutnetFunct, aes(x=rank, y=count, fill=functional_group)) + 
+  geom_bar(position="fill", stat="identity") +
+  xlab('Rank') + ylab('Proportion') +
+  facet_wrap(~num_codominants)
+
+# corre <- read.csv('CoRRE\\corre_codominance_06092020.csv')
+
+###GEx methods
+GEx$method <- factor(GEx$method, levels=c('transect','small','big','huge','NA'))
+ggplot(data=barGraphStats(data=GEx, variable="num_codominants", byFactorNames=c("method",'database')), aes(x=method, y=mean)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2) +
+  ylab('Number of Codominants') +
+  facet_wrap(~database)
+#export at 900x900
+
+
+###NutNet map
+library(wesanderson)
+library("rnaturalearth")
+library("rnaturalearthdata")
+library("rgeos")
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+z.pal<-wes_palette("Zissou1", 100, type = "continuous")
+
+ggplot(data=world)+
+  theme(panel.background=element_rect(fill="aliceblue", color="aliceblue"))+
+  theme(text=element_text(size=20, colour="black"),axis.text.x=element_text(size=20, colour="black"),
+        axis.text.y=element_text(size=20, colour="black"))+
+  geom_sf(color="black", fill="antiquewhite")+
+  geom_point(data=nutnet, mapping=aes(x=longitude,y=latitude,fill=num_codominants),size=4.5,shape=21)+
+  scale_fill_gradientn(colours = z.pal) +
+  labs(fill="Number of Co-Dominants")+
+  theme(legend.position = "top")+
+  ylab(expression("Latitude "*degree*""))+
+  xlab(expression("Longitude "*degree*""))
+dev.off()
+
+
+###NutNet families
 
 
 ###combine data
