@@ -6,6 +6,7 @@
 ################################################################################
 
 library(psych)
+library(codyn)
 library(tidyverse)
 
 #kim's laptop
@@ -35,6 +36,12 @@ relCover <- nutnet%>%
   right_join(nutnet)%>%
   mutate(relcov=(cover/totcov)*100)%>%
   select(-cover, -totcov)
+
+evenness <- relCover%>%
+  community_structure(time.var = 'year', abundance.var = 'relcov',
+                      replicate.var = 'exp_unit', metric = c("Evar", "SimpsonEvenness", "EQ"))
+
+# write.csv(evenness, 'nutnet_richEven_06122020.csv')
 
 #generate rank of each species in each plot by relative cover, with rank 1 being most abundant
 rankOrder <- relCover%>%
