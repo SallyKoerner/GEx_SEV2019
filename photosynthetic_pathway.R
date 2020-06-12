@@ -4,18 +4,42 @@
 ##  Author: Kimberly Komatsu and Sally Koerner
 ##  Date created: April 25, 2019
 ################################################################################
+##Update by S Koerner on June 12, 2020
+################################################################################
 
 library(tidyverse)
 
 #kim's laptop
 setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\GEx working groups\\SEV 2019\\data')
+#Sally's laptop
+setwd("~/Dropbox/GEx_VirtualWorkshop_June2020")
 
 ###read in all data
-familyList <- read.csv('GEx_species_family_final_jn.csv')%>% #list of all species and their families/photosynthetic pathways
-  select(-X, -genus_species, -tnrs_accepted_name)%>%
-  filter(!is.na(clean_ejf))
-coverData <- read.csv('GEx_cleaned_v3.csv')%>% #all cover data
-  left_join(familyList)%>%
+familyList <- read.csv('GEx_sppfam_FINAL_10June2020.csv')%>% #list of all species and their families/photosynthetic pathways
+  select(-genus_species, -tnrs_accepted_name)%>%
+  filter(!is.na(clean_ejf)) %>% 
+  rename(genus_species_clean=clean_ejf)
+
+familyList2<-familyList %>% 
+  group_by(genus_species_clean, family_ejf, pathway) %>% 
+  summarise(num=n()) %>% 
+  select(-num) %>% 
+  ungroup() %>% 
+  group_by(genus_species_clean, family_ejf) %>% 
+  summarise(num=n()) 
+
+coverData <- read.csv('GEx_cleaned_11June2020.csv') %>% 
+  mutate(drop=ifelse(genus_species_use=="#N/A"|genus_species_use=="Dead unidentified"|genus_species_use=="Leaf.Litter"|genus_species_use=="cactus__dead_", 1, 0))%>%
+  filter(drop!=1) %>% 
+  select(-drop)
+
+Unknowns<-coverData %>% 
+  filter(is.na(genus_species_clean))
+
+
+coverData2<-coverData %>%
+  filter(!is.na(genus_species_clean)) %>% 
+  left_join(familyList2)%>%
   unique()
 
 photopath <- coverData%>%
