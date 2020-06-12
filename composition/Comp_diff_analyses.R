@@ -2,10 +2,10 @@ library(tidyverse)
 library(codyn)
 library(rsq)
 
-setwd("~/Dropbox/Dominance WG/")
-comp_all<-read.csv("gex_multdiff_all.csv")
-comp<-read.csv("gex_multdiff_ave.csv")
-rac<-read.csv("gex_racdiff_ave.csv")
+setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
+comp_all<-read.csv("gex_multdiff_site_block.csv")
+comp<-read.csv("gex_multdiff_site_ave.csv")
+rac<-read.csv("gex_racdiff_site_ave.csv")
 experiment<-read.csv("Meta_SEV2019.csv")%>%
   select(site, ANPP, PlotSize, domestic, dom, precip, Num_ex, grazing.pressure, Grazer_Domestic, herbivore.type, guild, sprich, X..herbivore.spp)
 exage<-read.csv("All_Cleaned_April2019_V2.csv")%>%

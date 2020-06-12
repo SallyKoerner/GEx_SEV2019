@@ -47,11 +47,6 @@ SimpD<-community_diversity(lsyear2, replicate.var="site_block_trt", abundance.va
   spread(trt, SimpD) %>% 
   mutate(SimpD_rr=(log(G/U))) %>% 
   select(-G, -U)
-
-exage<-lsyear2 %>% 
-  group_by(site, exage) %>% 
-  summarise(num=n()) %>% 
-  select(-num)
   
 RACdiff <- read.csv('gex_RACdiff_site_ave.csv') #RAC differences
 compDiff <- read.csv('gex_multdiff_site_ave.csv') #composition difference
@@ -105,8 +100,7 @@ compDiffSite <- SimpD%>%
   left_join(codomDiff)%>%
   left_join(photopath)%>%
   left_join(phylorealms)%>%
-  left_join(blockNum) %>% 
-  left_join(exage)
+  left_join(blockNum)
 
 ###import data
 All <- compDiffSite
@@ -122,7 +116,7 @@ All2<-All %>%
   mutate(ALLC4=(C4+C4)) %>% 
   mutate(PhotoMix=abs(ALLC3-ALLC4)) 
 
-write.csv(All2, 'community_difference_allmetrics_siteavg_12June2020c.csv', row.names=F)
+write.csv(All2, 'community_difference_allmetrics_siteavg_12June2020.csv', row.names=F)
 
 
 panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...){
