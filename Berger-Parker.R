@@ -80,7 +80,7 @@ diffG_U<-ungraze%>%
          diff_sp=ifelse(graze_sp==ungraze_sp, 0, 1))
 
 ##this is the file that beth and ben want
-write.csv(diffG_U, "Diff_BP_Dom_allyrs.csv")
+#write.csv(diffG_U, "Diff_BP_Dom_allyrs.csv")
 
 ###using the last year only for the figure
 diffG_U.lyr<-diffG_U%>%
@@ -170,3 +170,5 @@ ggplot(data=toplot_all, aes(x=diff_sp, y=mean, fill=type))+
   ylab("Difference in Dominance")+
   #scale_x_discrete(labels=c("No Change", "Change", "All Data"))+ can't get this to work for some reason
   scale_fill_manual(name="Dominant\nSpecies Identity", values=c("blue", "red"), labels=c("Absolute Value", "Raw Value"))
+
+
