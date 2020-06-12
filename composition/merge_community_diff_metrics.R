@@ -89,23 +89,7 @@ blockNum <- dat%>%
   group_by(site)%>%
   summarise(num_blocks=length(block))%>%
   ungroup()
-
-#####Kim's Old Code satrts here
-###import data
-domDiff <- read.csv('OnlineVersion_withSimpD_Apr2018.csv')%>%select(-X) #dominance difference, with a bunch of site level covariates
 photopath <- read.csv('percent_photosynthetic_pathway.csv') #photosynthetic pathways
-
-
-domRankDiff <- read.csv('sitelevel_domspecies_rankchange.csv')%>%select(-X) #rank change of dominant species
-domPercentDiff <- read.csv('DomIdentityNumChangeLRR_bySite_SEV_April2019.csv') #percent abundance difference of dominant species
-
-blockNum <- read.csv('GEx_cleaned_v3.csv')%>%
-  select(site, block)%>%
-  unique()%>%
-  group_by(site)%>%
-  summarise(num_blocks=length(block))%>%
-  ungroup()
-  
 
 ###merge together
 compDiffSite <- SimpD%>%
@@ -114,10 +98,8 @@ compDiffSite <- SimpD%>%
   left_join(domIDdiff)%>%
   left_join(CmaxDiff)%>%
   left_join(codomDiff)%>%
- # left_join(photopath)%>%
+  left_join(photopath)%>%
   left_join(phylorealms)%>%
- # left_join(domRankDiff)%>%
- # left_join(domPercentDiff)%>%
   left_join(blockNum)
 
 ###import data
@@ -129,14 +111,14 @@ Herb<- read.csv('Meta_SEV2019_v2_with_body_size.csv')
 All2<-All %>% 
   left_join(Meta)%>%
   left_join(Climate)%>%
-  left_join(Herb) 
+  left_join(Herb) %>% 
+  mutate(ALLC3=(C3)) %>% 
+  mutate(ALLC4=(C4+C4)) %>% 
+  mutate(PhotoMix=abs(ALLC3-ALLC4)) 
 
-#%>% 
- # mutate(ALLC3=(C3+C3.)) %>% 
-  #mutate(ALLC4=(C4+C4.)) %>% 
-#  mutate(PhotoMix=abs(ALLC3-ALLC4)) 
+write.csv(All2, 'community_difference_allmetrics_siteavg_12June2020.csv', row.names=F)
 
-#write.csv(All2, 'community_difference_allmetrics_siteavg_09June2020.csv', row.names=F)
+
 panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...){
   usr <- par("usr"); on.exit(par(usr))
   par(usr = c(0, 1, 0, 1))
@@ -153,6 +135,8 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...){
   text(0.5, 0.5, txt, cex = 2)
   text(0.8, 0.5, Signif, cex=5, col="red")
 }
+
 toplot<-All%>%
   filter(!is.na(bp_rr))
+
 pairs(toplot[,c(3, 4, 5, 6, 7, 8, 2, 9, 11, 12)], pch = 21, font.labels=1, cex.labels=2,upper.panel=panel.cor)
