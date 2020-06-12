@@ -19,12 +19,17 @@ theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)
              legend.title=element_blank(), legend.text=element_text(size=20))
 
 ###read in data
-GEx <- read.csv('GEx_cleaned_v3.csv')%>%
-  select(-genus_species)%>%
-  rename(genus_species=clean_ejf, cover=relcov)%>%
-  mutate(exp_unit=paste(site, block, plot, trt, year, sep='::'))
+GEx <- read.csv('GEx_cleaned_11June2020.csv')%>%
+  mutate(drop=ifelse(genus_species_use=="#N/A"|genus_species_use=="Dead unidentified"|genus_species_use=="Leaf.Litter"|genus_species_use=="cactus__dead_", 1, 0))%>%
+  filter(drop!=1)%>%
+  select(-genus_species, -genus_species_clean, -drop)%>%
+  rename(genus_species=genus_species_use, cover=relcov)%>%
+  group_by(site, year, exage, block, trt, genus_species)%>%
+  summarise(cover=mean(cover))%>%
+  ungroup()%>%
+  mutate(exp_unit=paste(site, block, trt, year, sep='::'))
 
-
+  
 #############################################
 #####calculate Cmax (codominance metric)#####
 
@@ -90,8 +95,8 @@ Cmax <- differenceData%>%
   rename(num_codominants=num_ranks)%>%
   select(exp_unit, Cmax, num_codominants)%>%
   mutate(exp_unit2=exp_unit)%>%
-  separate(exp_unit2, into=c('site', 'block', 'plot', 'trt', 'year'), sep='::')%>%
-  mutate(plot=as.integer(plot), year=as.integer(year))
+  separate(exp_unit2, into=c('site', 'block', 'trt', 'year'), sep='::')%>%
+  mutate(year=as.integer(year))
 
 codomSppList <- Cmax%>%
   left_join(rankOrder)%>%
@@ -99,7 +104,7 @@ codomSppList <- Cmax%>%
   filter(rank<=num_codominants)%>%
   ungroup()
 
-# write.csv(codomSppList, 'GEx_codominants_list_06092020.csv', row.names=F)
+# write.csv(codomSppList, 'GEx_codominants_list_06112020.csv', row.names=F)
 
 #histogram of codom
 ggplot(data=codomSppList, aes(x=num_codominants)) +
@@ -122,15 +127,12 @@ siteData <- read.csv('GEx-metadata-with-other-env-layers-v2.csv')%>%
 
 #get site-level average cmax and number of codominants
 CmaxDrivers <- Cmax%>%
-  group_by(site, block, year, trt)%>%
-  summarise(num_codominants=mean(num_codominants), Cmax=mean(Cmax))%>%
-  ungroup()%>%
   group_by(site, year, trt)%>%
   summarise(num_codominants=mean(num_codominants), Cmax=mean(Cmax))%>%
   ungroup()%>%
   left_join(siteData)
 
-# write.csv(CmaxDrivers, 'GEx_codominance_06092020.csv', row.names=F)
+# write.csv(CmaxDrivers, 'GEx_codominance_06112020.csv', row.names=F)
 
 ggplot(data=CmaxDrivers, aes(x=Cmax, y=num_codominants)) +
   geom_point() +
