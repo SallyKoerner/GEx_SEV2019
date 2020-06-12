@@ -2,6 +2,8 @@ library(tidyverse)
 library(codyn)
 library(rsq)
 library(vegan)
+source("Wd.R")
+
 
 theme_set(theme_bw(12))
 
@@ -23,7 +25,9 @@ lsyear<-dat%>%
   mutate(lyear=max(year),
          mexage=max(exage))%>%
   filter(year==lyear, mexage==exage)%>%
+  mutate(block = as.numeric(block))%>%
   mutate(site_block=paste(site, block, sep="##"))
+
 
 #dropping probelmatic blocks and averaging over experiments where there are several blocks in a plot. 
 #Averaging up to a block for Konza, Junner Koeland, and Jornada sites.
@@ -49,11 +53,11 @@ lsyear2.2<-lsyear2%>%
 gex_permanova<-data.frame()
 sitelist<-unique(lsyear2.2$site)
 
-
-for (i in 1:length(sitelist)){
+for (i in sitelist){
   
   subset<-lsyear2.2%>%
-    filter(site==sitelist[i]) 
+    filter(site==i) %>%
+    mutate(treatment=trt)
   
   wide<-subset%>%
     spread(genus_species_use, relcov, fill=0)
@@ -63,12 +67,17 @@ for (i in 1:length(sitelist)){
   out <- adonis(wide[,12:ncol(wide)]~trt, wide, strata = wide$block)
 
   
+  # Assemble data frame
   perm_out <- data.frame(
-    site = sitelist[i],
-    perm_Pvalue =  out$aov.tab$'Pr(>F)'[1]
+    site = i,
+    perm_Pvalue =  out$aov.tab$'Pr(>F)'[1],
+    Tw_Pvalue = Tw_test_out$p.value,
+    WdS_Pvalue = WdS_test_out$p.value
   )
+  perm_out
   
-   gex_permanova<-rbind(gex_permanova, perm_out)  
+  gex_permanova<-rbind(gex_permanova, perm_out)  
+   
 }
 
 
