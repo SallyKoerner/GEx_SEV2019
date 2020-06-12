@@ -1,16 +1,15 @@
 ################################################################################
-##  codominance.R: Function to calculate codominance of a community.
+##  codominance_analyses_figures.R: Merge datasets and perform analyses. Generate figures for publication.
 ##
 ##  Author: Kimberly Komatsu
-##  Date created: April 24, 2019
+##  Date created: June 9, 2020
 ################################################################################
 
-library(psych)
 library(tidyverse)
+library(jmv)
 
 #kim's laptop
-setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\GEx working groups\\SEV 2019\\data')
-
+setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\GEx working groups\\SEV 2019\\codominance\\data')
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=34, color='black'),
@@ -41,116 +40,159 @@ barGraphStats <- function(data, variable, byFactorNames) {
 
 
 ###read in data
-GEx <- read.csv('All_Cleaned_April2019_V2.csv')%>%
-  rename(cover=relcov)%>%
-  mutate(exp_unit=paste(site, block, plot, trt, year, sep='::'))
+GEx <- read.csv('GEx\\GEx_codominance_06112020.csv')%>%
+  mutate(database=paste('GEx',trt))%>%
+  mutate(method=ifelse(plot.size.shape %in% c('12.25','10 m long (50 points)','120 m long','1440 pin hits','15m long','20 m long','30 m line','60 m long','80 m long'), 'transect', 
+                       ifelse(plot.size.shape %in% c('0.75m2','1 m2','1.25m2','1.4m2','1m2','2 m2','2.5m2','2-4m2','3.5 m2','4 m2','4m2','4m3','4m4','4m5','4m6','4m7','4m8','4m9','5 m2', '5m2'), 'small', 
+                              ifelse(plot.size.shape %in% c('~23m2','10 m2','10m2','12m2','20m2','22.5m2','24m2','25m2','25m2?','8m2'), 'big', ifelse(is.na(plot.size.shape), 'NA', 'huge')))))
 
-# #subset a test dataset of one plot to create a function
-# test <- GEx%>%
-#   filter(site=='Konza'&block=='A'&plot==1)
+nutnet <- read.csv('nutnet\\NutNet_codominance_06092020.csv')%>%
+  mutate(database='nutnet')
 
-
-#############################################
-#####calculate Cmax (codominance metric)#####
-
-#calculate relative abundance
-relCover <- GEx%>%
-  group_by(exp_unit)%>%
-  summarise(totcov=sum(cover))%>%
+#nutnet evenness data
+nutnetEven <- read.csv('nutnet\\nutnet_richEven_06122020.csv')%>%
+  separate(exp_unit, into=c('site', 'block', 'plot', 'trt', 'year'), sep='::')%>%
+  mutate(plot=as.integer(plot), year=as.integer(year), block=as.integer(block))%>%
+  group_by(site, block, trt, year)%>%
+  summarise(richness=mean(richness), Evar=mean(Evar))%>%
   ungroup()%>%
-  right_join(GEx)%>%
-  mutate(relcov=(cover/totcov)*100)%>%
-  select(-cover, -totcov)
-
-#generate rank of each species in each plot by relative cover, with rank 1 being most abundant
-rankOrder <- relCover%>%
-  group_by(exp_unit)%>%
-  mutate(rank = as.numeric(order(order(relcov, decreasing=TRUE))))%>%
-  ungroup()
-
-###calculating harmonic means for all subsets of rank orders
-#make a new dataframe with just the label
-expUnit=GEx%>%
-  select(exp_unit)%>%
-  unique()
-
-#makes an empty dataframe
-harmonicMean=data.frame(row.names=1) 
-
-#calculate harmonic means
-for(i in 1:length(expUnit$exp_unit)) {
-  
-  #creates a dataset for each unique experimental unit
-  subset <- rankOrder[rankOrder$exp_unit==as.character(expUnit$exp_unit[i]),]%>%
-    select(exp_unit, genus_species, relcov, rank)
-  
-  for(j in 1:length(subset$rank)) {
-    
-    #creates a dataset for each series of ranks from 1 through end of the number of ranks
-    subset2 <- subset[subset$rank<=j,]
-    
-    #calculate harmonic mean of values
-    mean <- harmonic.mean(subset2$relcov)
-    meanData <- data.frame(exp_unit=unique(subset2$exp_unit),
-                           num_ranks=j, 
-                           harmonic_mean=mean)
-    
-    harmonicMean=rbind(meanData, harmonicMean)
-    
-  }
-  
-}
-
-differenceData <- harmonicMean%>%
-  left_join(rankOrder)%>%
-  filter(rank==num_ranks+1)%>% #only keep the next most abundant species after the number that went into the calculation of the harmonic mean
-  mutate(difference=harmonic_mean-relcov) #calculates difference between harmonic mean and the relative cover of the next most abundant species
-  
-Cmax <- differenceData%>%
-  group_by(exp_unit)%>%
-  summarise(Cmax=max(difference))%>%
+  group_by(site, trt, year)%>%
+  summarise(richness=mean(richness), Evar=mean(Evar))%>%
   ungroup()%>%
-  left_join(differenceData)%>%
-  filter(Cmax==difference)%>%
-  rename(num_codominants=num_ranks)%>%
-  select(exp_unit, Cmax, num_codominants)%>%
-  mutate(exp_unit2=exp_unit)%>%
-  separate(exp_unit2, into=c('site', 'block', 'plot', 'trt', 'year'), sep='::')%>%
-  mutate(plot=as.integer(plot), year=as.integer(year))
+  left_join(nutnet)
 
-codomSppList <- Cmax%>%
-  left_join(rankOrder)%>%
-  group_by(exp_unit)%>%
-  filter(rank<=num_codominants)%>%
-  ungroup()
-
-#write.csv(codomSppList, 'GEx_codominane_04242019.csv', row.names=F)
-
-#histogram of codom
-ggplot(data=codomSppList, aes(x=num_codominants)) +
-  geom_histogram(color="black", fill="white", binwidth=1) +
-  xlab('Number of Codominant Species') + ylab('Count')
-
-
-###what drives codominance?
-
-#read in site-level data
-siteData <- read.csv('Meta_SEV2019_v2.csv')
-
-#get site-level average cmax and number of codominants
-CmaxDrivers <- Cmax%>%
-  group_by(site, block, trt)%>%
-  summarise(num_codominants=mean(num_codominants), Cmax=mean(Cmax))%>%
-  ungroup()%>%
-  group_by(site, trt)%>%
-  summarise(num_codominants=mean(num_codominants), Cmax=mean(Cmax))%>%
-  ungroup()%>%
-  left_join(siteData)
-
-
-ggplot(data=CmaxDrivers, aes(x=Cmax, y=num_codominants)) +
+ggplot(data=subset(nutnetEven, year_trt==0), aes(x=Evar, y=num_codominants)) +
   geom_point() +
-  xlab('Cmax') + ylab('Number of Codominants')
+  xlab('Evar') + ylab('Number of Codominants')
+  
+ggplot(data=subset(nutnetEven, year_trt==0), aes(x=richness, y=num_codominants)) +
+  geom_point() +
+  xlab('Richness') + ylab('Number of Codominants')
+
+
+#nutnet who are codom
+nutnetFam <- read.csv('nutnet\\NutNet_codominants_list_06092020.csv')%>%
+  filter(trt=='Control')%>%
+  group_by(num_codominants, rank, Family)%>%
+  summarise(count=length(Cmax))%>%
+  ungroup()%>%
+  mutate(family_group=ifelse(Family %in% c('Poaceae','Fabaceae','Compositae','Cyperaceae','Rubiaceae','Apiaceae','Geraniaceae'), as.character(Family), 'other'))
+
+ggplot(nutnetFam, aes(x=rank, y=count, fill=family_group)) + 
+  geom_bar(position="fill", stat="identity") +
+  xlab('Rank') + ylab('Proportion') +
+  facet_wrap(~num_codominants)
+
+nutnetFunct <- read.csv('nutnet\\NutNet_codominants_list_06092020.csv')%>%
+  filter(trt=='Control')%>%
+  group_by(num_codominants, rank, functional_group)%>%
+  summarise(count=length(Cmax))%>%
+  ungroup()
+
+ggplot(nutnetFunct, aes(x=rank, y=count, fill=functional_group)) + 
+  geom_bar(position="fill", stat="identity") +
+  xlab('Rank') + ylab('Proportion') +
+  facet_wrap(~num_codominants)
+
+# corre <- read.csv('CoRRE\\corre_codominance_06092020.csv')
+
+###GEx methods
+GEx$method <- factor(GEx$method, levels=c('transect','small','big','huge','NA'))
+ggplot(data=barGraphStats(data=GEx, variable="num_codominants", byFactorNames=c("method",'database')), aes(x=method, y=mean)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2) +
+  ylab('Number of Codominants') +
+  facet_wrap(~database)
+#export at 900x900
+
+
+###NutNet map
+library(wesanderson)
+library("rnaturalearth")
+library("rnaturalearthdata")
+library("rgeos")
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+z.pal<-wes_palette("Zissou1", 100, type = "continuous")
+
+ggplot(data=world)+
+  theme(panel.background=element_rect(fill="aliceblue", color="aliceblue"))+
+  theme(text=element_text(size=20, colour="black"),axis.text.x=element_text(size=20, colour="black"),
+        axis.text.y=element_text(size=20, colour="black"))+
+  geom_sf(color="black", fill="antiquewhite")+
+  geom_point(data=nutnet, mapping=aes(x=longitude,y=latitude,fill=num_codominants),size=4.5,shape=21)+
+  scale_fill_gradientn(colours = z.pal) +
+  labs(fill="Number of Co-Dominants")+
+  theme(legend.position = "top")+
+  ylab(expression("Latitude "*degree*""))+
+  xlab(expression("Longitude "*degree*""))
+dev.off()
+
+
+###NutNet families
+
+
+###combine data
+#only shared drivers
+GExShared <- GEx%>%select(database, site, year, trt, Cmax, num_codominants, latitude, longitude, plant_gamma, MAT, temp_range, MAP, precip_cv, Ndep)
+nutnetShared <- nutnet%>%select(database, site, year, trt, Cmax, num_codominants, latitude, longitude, plant_gamma, MAT, temp_range, MAP, precip_cv, Ndep)
+
+codom <- rbind(GExShared,nutnetShared)%>%
+  filter(!is.na(latitude), Ndep!='NULL')%>%
+  mutate(Ndep=as.numeric(Ndep))
+
+###how many sites have codominance?
+ggplot(data=subset(codom, trt %in% c('G', 'U', 'Control')), aes(x=num_codominants)) +
+  geom_histogram(color="black", fill="white", binwidth=1) +
+  xlab('Number of Codominant Species') + ylab('Count') +
+  facet_wrap(~database, scales='free_y')
+#export at 2000x800
+
+
+
+###MANCOVA
+mancova(data=subset(codom, trt %in% c('G', 'U', 'Control') & num_codominants<15),
+                                    deps=vars(Cmax, num_codominants),
+                                    factors=c('database'),
+                                    covs=c('plant_gamma', 'MAT', 'temp_range', 'MAP', 'precip_cv', 'Ndep'))
+
+ggplot(data=subset(codom, trt %in% c('G', 'U', 'Control') & num_codominants<15), aes(x=plant_gamma, y=num_codominants, color=Cmax)) +
+  geom_point() +
+  geom_smooth(method='lm', se=F) +
+  xlab('Plant Gamma Diversity') + ylab('Number of Codominants') +
+  facet_wrap(~database)
+#export at 2000x800
+
+ggplot(data=subset(codom, trt %in% c('G', 'U', 'Control') & num_codominants<15), aes(x=MAP, y=num_codominants, color=Cmax)) +
+  geom_point() +
+  geom_smooth(method='lm', se=F) +
+  xlab('Mean Annual Precipitation') + ylab('Number of Codominants') +
+  facet_wrap(~database)
+#export at 2000x800
+
+#GEx only -- plot size or number?
+ggplot(data=subset(GEx, trt %in% c('G', 'U') & num_codominants<15), aes(x=PlotSize, y=num_codominants, color=Cmax)) +
+  geom_point() +
+  geom_smooth(method='lm', se=F) +
+  xlab('Plot Size') + ylab('Number of Codominants') +
+  facet_wrap(~database)
+
+ggplot(data=subset(GEx, trt %in% c('G', 'U') & num_codominants<15), aes(x=Num_plots, y=num_codominants, color=Cmax)) +
+  geom_point() +
+  geom_smooth(method='lm', se=F) +
+  xlab('Plot Size') + ylab('Number of Codominants') +
+  facet_wrap(~database)
+#export at 2000x800
+
+
+
+
+
+
+
+
+
+#code that needs modification:
 
 
 ###figures and models for number of codominants-------------
@@ -252,8 +294,7 @@ ggplot(data=barGraphStats(data=CmaxDrivers, variable="Cmax", byFactorNames=c("tr
 ###multiple regression -- within grazed plots, effects of herbivores
 #number of codominants - driven by precip, species richness, biogeographic realm
 summary(lm(Cmax ~ precip + sprich + biogeographic.realm + grazing.pressure + herbivore.spp, data=subset(CmaxDrivers, trt=='G')))
-#remove the outlier at 17 - driven by species richness, biogeographic realm, number of herbivore species
-summary(lm(num_codominants ~ precip + sprich + biogeographic.realm + grazing.pressure +herbivore.spp, data=subset(CmaxDrivers, num_codominants<17 & trt=='G')))
+
 
 #figures - Cmax
 ggplot(data=subset(CmaxDrivers, trt=='G'), aes(x=sprich, y=Cmax, color=Cmax)) +
