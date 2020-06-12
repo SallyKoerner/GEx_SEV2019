@@ -57,6 +57,30 @@ domIDdiff <- read.csv('Diff_BP_Dom_allyrs_11June2020.csv') %>%  #difference in i
   filter(year==lyear, mexage==exage) %>% 
   summarise(bp_rr=mean(bp_rr), diff_sp=mean(diff_sp))
 
+codomDiff <- read.csv('GEx_codominance_06112020.csv')%>% #codominance imported, need to calculate diff
+  select(site, year, trt, num_codominants)%>%
+  unique()%>%
+  spread(key=trt, value=num_codominants)%>%
+  mutate(num_codom_diff=log(G/U))%>%
+  filter(!is.na(num_codom_diff)) %>% 
+  ungroup()%>%
+  group_by(site) %>% 
+  mutate(lyear=max(year))%>%
+  filter(year==lyear) %>% 
+  select(site, year, num_codom_diff)
+CmaxDiff <- read.csv('GEx_codominance_06112020.csv')%>% #Cmax imported, need to calculate diff
+  select(site, year, trt, Cmax)%>%
+  unique()%>%
+  spread(key=trt, value=Cmax)%>%
+  mutate(Cmax_diff=log(G/U))%>%
+  filter(!is.na(Cmax_diff))%>%
+  ungroup()%>%
+  group_by(site) %>% 
+  mutate(lyear=max(year))%>%
+  filter(year==lyear) %>% 
+  select(site, year, Cmax_diff) %>% 
+  ungroup()
+
 
 ### where we stopped on 11 June 2020
 
@@ -65,30 +89,7 @@ domIDdiff <- read.csv('Diff_BP_Dom_allyrs_11June2020.csv') %>%  #difference in i
 ###import data
 domDiff <- read.csv('OnlineVersion_withSimpD_Apr2018.csv')%>%select(-X) #dominance difference, with a bunch of site level covariates
 
-codomDiff <- read.csv('GEx_codominane_04242019.csv')%>% #codominance imported, need to calculate diff
-  select(site, block, plot, trt, num_codominants)%>%
-  unique()%>%
-  spread(key=trt, value=num_codominants)%>%
-  mutate(num_codom_diff=log(G/U))%>%
-  filter(!is.na(num_codom_diff))%>%
-  group_by(site, block)%>%
-  summarise(num_codom_diff=mean(num_codom_diff))%>%
-  ungroup()%>%
-  group_by(site)%>%
-  summarise(num_codom_diff=mean(num_codom_diff))%>%
-  ungroup()
-CmaxDiff <- read.csv('GEx_codominane_04242019.csv')%>% #Cmax imported, need to calculate diff
-  select(site, block, plot, trt, Cmax)%>%
-  unique()%>%
-  spread(key=trt, value=Cmax)%>%
-  mutate(Cmax_diff=log(G/U))%>%
-  filter(!is.na(Cmax_diff))%>%
-  group_by(site, block)%>%
-  summarise(Cmax_diff=mean(Cmax_diff))%>%
-  ungroup()%>%
-  group_by(site)%>%
-  summarise(Cmax_diff=mean(Cmax_diff))%>%
-  ungroup()
+
 photopath <- read.csv('percent_photosynthetic_pathway.csv') #photosynthetic pathways
 phylorealms <- read.csv('PhyloRealms.csv')%>%select(-X) #phylogenetic realms
 domRankDiff <- read.csv('sitelevel_domspecies_rankchange.csv')%>%select(-X) #rank change of dominant species
