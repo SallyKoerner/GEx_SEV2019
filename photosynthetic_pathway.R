@@ -24,21 +24,12 @@ familyList2<-familyList %>%
   group_by(genus_species_clean, family_ejf, pathway) %>% 
   summarise(num=n()) %>% 
   select(-num) %>% 
-  ungroup() %>% 
-  group_by(genus_species_clean, family_ejf) %>% 
-  summarise(num=n()) 
+  ungroup() 
 
 coverData <- read.csv('GEx_cleaned_11June2020.csv') %>% 
   mutate(drop=ifelse(genus_species_use=="#N/A"|genus_species_use=="Dead unidentified"|genus_species_use=="Leaf.Litter"|genus_species_use=="cactus__dead_", 1, 0))%>%
   filter(drop!=1) %>% 
-  select(-drop)
-
-Unknowns<-coverData %>% 
-  filter(is.na(genus_species_clean))
-
-
-coverData2<-coverData %>%
-  filter(!is.na(genus_species_clean)) %>% 
+  select(-drop)%>% 
   left_join(familyList2)%>%
   unique()
 
@@ -61,4 +52,4 @@ photopathSite <- photopath%>%
   spread(key=pathway, value=relcov, fill=0)
 
 
-# write.csv(photopathSite, 'percent_photosynthetic_pathway.csv', row.names=F)
+write.csv(photopathSite, 'percent_photosynthetic_pathway.csv', row.names=F)
