@@ -26,16 +26,41 @@ familyList2<-familyList %>%
   select(-num) %>% 
   ungroup() 
 
-coverData <- read.csv('GEx_cleaned_11June2020.csv') %>% 
+start <- read.csv('GEx_cleaned_11June2020.csv') %>% 
+  mutate(site_block=paste(site, block, sep="##")) %>% 
+  filter(site_block!="California_Sedgwick_Lisque##A"&
+           site_block!="California_Sedgwick_Lisque##B"&
+           site_block!="California_Sedgwick_Lisque##G"&
+           site_block!="DesertLow##Alkali")%>%
+  group_by(site, block, exage, year, trt, genus_species_use,
+           genus_species_clean, site_block)%>%
+  summarize(relcov=mean(relcov)) %>% 
   mutate(drop=ifelse(genus_species_use=="#N/A"|genus_species_use=="Dead unidentified"|genus_species_use=="Leaf.Litter"|genus_species_use=="cactus__dead_", 1, 0))%>%
   filter(drop!=1) %>% 
-  select(-drop)%>% 
-  left_join(familyList2)%>%
-  unique()
+  select(-drop)%>%
+  ungroup %>% 
+  rename(cov=relcov)
+  
+ total<- start %>% 
+   group_by(site, block, exage, year, trt) %>% 
+   summarise(total=sum(cov))
+ 
+ coverData<-start %>% 
+   left_join(total) %>% 
+   mutate(relcov=(cov/total)*100) %>% 
+   left_join(familyList2)%>%
+   unique()
 
-photopath <- coverData%>%
+coverData_lsyear<-coverData %>% 
+  group_by(site, block, trt) %>% 
+  mutate(lyear=max(year),
+         mexage=max(exage))%>%
+  filter(year==lyear, mexage==exage) 
+
+photopath <- coverData_lsyear%>%
   mutate(pathway=ifelse(is.na(pathway), "unknown", as.character(pathway)))%>%
-  group_by(site, block, plot, trt, pathway)%>%
+  mutate(pathway=ifelse(pathway=="", "unknown", as.character(pathway)))%>%
+  group_by(site, block, trt, pathway)%>%
   summarise(photo_path=sum(relcov))%>%
   ungroup()%>%
   spread(key=pathway, value=photo_path, fill=0)%>%
