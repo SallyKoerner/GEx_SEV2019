@@ -1,3 +1,8 @@
+####created by M. Avolio June 2020 for virtual working group.
+###this code was to see which communities had different composition based on permanvoa
+###We have decided to not use this is then final paper but are using Ava's boot strapped approach instead.
+
+
 library(tidyverse)
 library(codyn)
 library(rsq)
@@ -83,7 +88,7 @@ for (i in sitelist){
 
 ## look at NMDS to see gut check
 msub<-lsyear2.2%>%
-  filter(site=="AUS_Savernake")
+  filter(site=="AUS_Berry")
 
 mwide<-msub%>%
   spread(genus_species_use, relcov, fill=0)
@@ -112,34 +117,6 @@ gex_multdiff_CI<-comp%>%
   summarize_at(vars(composition_diff), funs(mean, sd, length)) %>% 
   mutate(se=sd/sqrt(length),
          ci=se*1.96)
-
-#geting global mean comp diff
-mean<-mean(gex_multdiff_CI$mean)
-sd<-sd(gex_multdiff_CI$mean)
-se<-sd/sqrt(252)
-ci<-se*1.96
-site<-"All Sites"
-
-all<- data.frame(site, mean, sd, se, ci)
-
-gex_multdiff_CI <- gex_multdiff_CI[order(gex_multdiff_CI$mean), ]  # sort
-gex_multdiff_CI2<-gex_multdiff_CI%>%
-  bind_rows(all)%>%
-  mutate(colortrt=ifelse(site=="All Sites", 1,0))
-gex_multdiff_CI2$site2 <- factor(gex_multdiff_CI2$site, levels = gex_multdiff_CI2$site)
-
-
-ggplot(data=gex_multdiff_CI2, aes(x=site2, y=mean, color=as.factor(colortrt)))+
-  geom_point()+
-  scale_color_manual(values=c("black", "red"))+
-  geom_errorbar(aes(ymin=mean-ci, ymax=mean+ci))+
-  coord_flip()+
-  xlab("Site")+
-  ylab("Compositional Difference")+
-  #scale_y_continuous(limits = c(0,1))+
-  theme(axis.text.y=element_blank(),
-        axis.ticks.y = element_blank(),
-        legend.position = "none")
 
 ###making comp diff sig figure based on permanovas
 
