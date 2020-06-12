@@ -28,14 +28,14 @@ sd<-sd(gex_multdiff_CI$mean)
 se<-sd/sqrt(252)
 ci<-se*1.96
 site<-"All Sites"
-
+#not including green dot.
 all<- data.frame(site, mean, sd, se, ci)
 
 gex_multdiff_CI <- gex_multdiff_CI[order(gex_multdiff_CI$mean), ]  # sort
+
 gex_multdiff_CI2<-gex_multdiff_CI%>%
-  bind_rows(all)%>%
-  mutate(colortrt=ifelse(site=="All Sites", 1, ifelse(site=="AUS_Berry", 2, ifelse(site=="CPER", 3, ifelse(site=="Kruger_Satara", 4, 0)))))%>%
-  mutate(size=ifelse(site=="All Sites"|site=="AUS_Berry"|site=="CPER"|site=="Kruger_Satara", 0.5, 0))
+  mutate(colortrt=ifelse(site=="AUS_Berry", 2, ifelse(site=="CPER", 3, ifelse(site=="Kruger_Satara", 4, 0))))%>%
+  mutate(size=ifelse(site=="AUS_Berry"|site=="CPER"|site=="Kruger_Satara", 0.5, 0))
 
 gex_multdiff_CI2$site2 <- factor(gex_multdiff_CI2$site, levels = gex_multdiff_CI2$site)
 
@@ -44,9 +44,10 @@ highlight<-gex_multdiff_CI2%>%
 
 shoosh<-
   ggplot(data=gex_multdiff_CI2, aes(x=site2, y=mean, color=as.factor(colortrt)))+
+  geom_hline(yintercept=0.431, linetype="dashed")+
   geom_point(aes(size=as.factor(size)))+
   scale_size_manual(values=c(1, 3.5))+
-  scale_color_manual(values=c("black", "green4", "dodgerblue", "red", "orange"))+
+  scale_color_manual(values=c("black", "dodgerblue", "red", "orange"))+
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se))+
   geom_point(data=highlight, aes(x=site2, y= mean, color=as.factor(colortrt)), size=3.5)+
   coord_flip()+
@@ -180,6 +181,6 @@ low<-
 
 examples<-grid.arrange(high, mid, low, ncol=1)
 
-figure1<-grid.arrange(shoosh, examples, ncol=2, widths=c(3,2))
+figure1<-grid.arrange(shoosh, examples, ncol=2)
 
 ggsave("Figure1.jpg", figure1)
