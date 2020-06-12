@@ -1,15 +1,15 @@
 ################################################################################
-##  GEx_codominance.R: Calculate codominance of a community for GEx database.
+##  CoRRE_codominance.R: Calculate codominance of a community for CoRRE database.
 ##
 ##  Author: Kimberly Komatsu
-##  Date created: April 24, 2019
+##  Date created: June 12, 2020
 ################################################################################
 
 library(psych)
 library(tidyverse)
 
 #kim's laptop
-setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\GEx working groups\\SEV 2019\\codominance\\data\\GEx')
+setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\GEx working groups\\SEV 2019\\codominance\\data\\CoRRE')
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=34, color='black'),
@@ -19,26 +19,22 @@ theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)
              legend.title=element_blank(), legend.text=element_text(size=20))
 
 ###read in data
-GEx <- read.csv('GEx_cleaned_11June2020.csv')%>%
-  mutate(drop=ifelse(genus_species_use=="#N/A"|genus_species_use=="Dead unidentified"|genus_species_use=="Leaf.Litter"|genus_species_use=="cactus__dead_", 1, 0))%>%
-  filter(drop!=1)%>%
-  select(-genus_species, -genus_species_clean, -drop)%>%
-  rename(genus_species=genus_species_use, cover=relcov)%>%
-  group_by(site, year, exage, block, trt, genus_species)%>%
-  summarise(cover=mean(cover))%>%
-  ungroup()%>%
-  mutate(exp_unit=paste(site, block, trt, year, sep='::'))
+corre <- read.csv('SpeciesRawAbundance_Nov2019.csv')%>%
+  select(-X)%>%
+  left_join(read.csv('corre2trykey.csv'))%>%
+  select(-genus_species)%>%
+  rename(genus_species=species_matched, cover=abundance, plot=plot_id, trt=treatment, year=calendar_year)%>%
+  mutate(exp_unit=paste(site_code, project_name, plot, trt, year, sep='::'))
 
-  
 #############################################
 #####calculate Cmax (codominance metric)#####
 
 #calculate relative abundance
-relCover <- GEx%>%
+relCover <- corre%>%
   group_by(exp_unit)%>%
   summarise(totcov=sum(cover))%>%
   ungroup()%>%
-  right_join(GEx)%>%
+  right_join(corre)%>%
   mutate(relcov=(cover/totcov)*100)%>%
   select(-cover, -totcov)
 
@@ -50,13 +46,14 @@ rankOrder <- relCover%>%
 
 ###calculating harmonic means for all subsets of rank orders
 #make a new dataframe with just the label
-expUnit=GEx%>%
+expUnit=corre%>%
   select(exp_unit)%>%
   unique()
 
 #makes an empty dataframe
 harmonicMean=data.frame(row.names=1) 
 
+### NOTE: this code takes about 30 mins to run, so use the output in the dropbox unless there is a reason to re-run it
 #calculate harmonic means
 for(i in 1:length(expUnit$exp_unit)) {
   
@@ -85,7 +82,7 @@ differenceData <- harmonicMean%>%
   left_join(rankOrder)%>%
   filter(rank==num_ranks+1)%>% #only keep the next most abundant species after the number that went into the calculation of the harmonic mean
   mutate(difference=harmonic_mean-relcov) #calculates difference between harmonic mean and the relative cover of the next most abundant species
-  
+
 Cmax <- differenceData%>%
   group_by(exp_unit)%>%
   summarise(Cmax=max(difference))%>%
@@ -95,7 +92,7 @@ Cmax <- differenceData%>%
   rename(num_codominants=num_ranks)%>%
   select(exp_unit, Cmax, num_codominants)%>%
   mutate(exp_unit2=exp_unit)%>%
-  separate(exp_unit2, into=c('site', 'block', 'trt', 'year'), sep='::')%>%
+  separate(exp_unit2, into=c('site', 'project_name', 'plot', 'trt', 'year'), sep='::')%>%
   mutate(year=as.integer(year))
 
 codomSppList <- Cmax%>%
@@ -104,7 +101,7 @@ codomSppList <- Cmax%>%
   filter(rank<=num_codominants)%>%
   ungroup()
 
-# write.csv(codomSppList, 'GEx_codominants_list_06112020.csv', row.names=F)
+#write.csv(codomSppList, 'corre_codominants_list_06112020_toKNZ.csv', row.names=F)
 
 #histogram of codom
 ggplot(data=codomSppList, aes(x=num_codominants)) +
@@ -120,10 +117,15 @@ ggplot(data=codomSppList, aes(x=Cmax, y=num_codominants)) +
 
 ###what drives codominance?
 
+#fix starting here...
+
 #read in site-level data
-siteData <- read.csv('GEx-metadata-with-other-env-layers-v2.csv')%>%
+siteData <- read.csv('SiteExperimentDetails_March2019.csv')%>%
+  left_join(read.csv('ExperimentInformation_March2019.csv'))%>%
   select(-X)%>%
-  rename(plant_gamma=sprich, Ndep=N.deposition1993, latitude=Final.Lat, longitude=Final.Long, MAT=bio1, temp_range=bio7, MAP=bio12, precip_cv=bio15)
+  # select(site_code, continent, country, region, managed, burned, grazed, anthropogenic, habitat, elevation, latitude, longitude, site_richness, MAT_v2, ANN_TEMP_RANGE_v2, MAP_v2, MAP_VAR_v2, N_Dep, experiment_type, year, year_trt, first_nutrient_year, first_fenced_year, site_native_richness, site_introduced_richness)%>%
+  unique()%>%
+  rename(site=site_code, plant_gamma=rrich)
 
 #get site-level average cmax and number of codominants
 CmaxDrivers <- Cmax%>%
@@ -132,7 +134,7 @@ CmaxDrivers <- Cmax%>%
   ungroup()%>%
   left_join(siteData)
 
-# write.csv(CmaxDrivers, 'GEx_codominance_06112020.csv', row.names=F)
+# write.csv(CmaxDrivers, 'corre_codominance_06112020_toKNZ.csv', row.names=F)
 
 ggplot(data=CmaxDrivers, aes(x=Cmax, y=num_codominants)) +
   geom_point() +
