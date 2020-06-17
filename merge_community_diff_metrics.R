@@ -119,7 +119,7 @@ All2<-All %>%
   left_join(Climate)%>%
   left_join(Herb) %>% 
   mutate(ALLC3=(C3)) %>% 
-  mutate(ALLC4=(C4+C4)) %>% 
+  mutate(ALLC4=(C4+C4.)) %>% 
   mutate(PhotoMix=abs(ALLC3-ALLC4)) 
 
 write.csv(All2, 'community_difference_allmetrics_siteavg_12June2020c.csv', row.names=F)
