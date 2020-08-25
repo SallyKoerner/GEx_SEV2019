@@ -53,7 +53,7 @@ expUnit=corre%>%
 #makes an empty dataframe
 harmonicMean=data.frame(row.names=1) 
 
-### NOTE: this code takes about 30 mins to run, so use the output in the dropbox unless there is a reason to re-run it
+### NOTE: this code takes about 5 hours to run, so use the output in the dropbox unless there is a reason to re-run it
 #calculate harmonic means
 for(i in 1:length(expUnit$exp_unit)) {
   
@@ -101,7 +101,7 @@ codomSppList <- Cmax%>%
   filter(rank<=num_codominants)%>%
   ungroup()
 
-#write.csv(codomSppList, 'corre_codominants_list_06112020_toKNZ.csv', row.names=F)
+#write.csv(codomSppList, 'corre_codominants_list_08242020.csv', row.names=F)
 
 #histogram of codom
 ggplot(data=codomSppList, aes(x=num_codominants)) +
@@ -134,7 +134,7 @@ CmaxDrivers <- Cmax%>%
   ungroup()%>%
   left_join(siteData)
 
-# write.csv(CmaxDrivers, 'corre_codominance_06112020_toKNZ.csv', row.names=F)
+# write.csv(CmaxDrivers, 'corre_codominance_08242020.csv', row.names=F)
 
 ggplot(data=CmaxDrivers, aes(x=Cmax, y=num_codominants)) +
   geom_point() +
