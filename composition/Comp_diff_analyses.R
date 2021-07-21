@@ -1,6 +1,7 @@
 library(tidyverse)
 library(codyn)
 library(rsq)
+library(ggthemes)
 
 setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
 comp_all<-read.csv("gex_multdiff_site_block.csv")
@@ -78,6 +79,52 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...){
   text(0.8, 0.5, Signif, cex=5, col="red")
 }
 pairs(comprac2[,c(2, 5, 6, 3, 4)], pch = 21, labels=c("Compositional\nDiff","Abs. Richness\nDiff", "Abs. Evenness\nDiff","Rank\nDiff","Species\nDiff"), font.labels=1, cex.labels=2,upper.panel=panel.cor)
+
+#Just 4 graphs
+rich <- ggplot(comprac2, aes(x=abs_rich, y=composition_diff)) +
+  geom_point() +
+  geom_smooth(method="lm",se=T) +
+  theme_few() +
+  ylab("Composition Difference") +
+  xlab("Richness Difference") +
+  theme(legend.position="none")
+rich
+a<-lm(comprac2$composition_diff~comprac2$abs_rich)
+summary(a)
+
+even <- ggplot(comprac2, aes(x=abs_even, y=composition_diff)) +
+  geom_point() +
+  geom_smooth(method="lm",se=T) +
+  theme_few() +
+  ylab("Composition Difference") +
+  xlab("Evenness Difference") +
+  theme(legend.position="none")
+even
+b<-lm(comprac2$composition_diff~comprac2$abs_even)
+summary(b)
+
+rank <- ggplot(comprac2, aes(x=rank_diff, y=composition_diff)) +
+  geom_point() +
+  geom_smooth(method="lm",se=T) +
+  theme_few() +
+  ylab("Composition Difference") +
+  xlab("Rank Difference") +
+  theme(legend.position="none")
+rank
+c<-lm(comprac2$composition_diff~comprac2$rank_diff)
+summary(c)
+
+species <- ggplot(comprac2, aes(x=species_diff, y=composition_diff)) +
+  geom_point() +
+  geom_smooth(method="lm",se=T) +
+  theme_few() +
+  ylab("Composition Difference") +
+  xlab("Species Difference") +
+  theme(legend.position="none")
+species
+d<-lm(comprac2$composition_diff~comprac2$species_diff)
+summary(d)
+
 
 ###doing multiple regression with experiment details
 comp_herb<-comp%>%
