@@ -10,8 +10,8 @@ theme_set(theme_bw(10))
 
 
 ###Meghan's Working Directory
-setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
-
+#setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
+setwd("/Users/skoerne/Dropbox/GEx/GEx_VirtualWorkshop_June2020")
 
 diffG_U<-read.csv("Diff_BP_Dom_allyrs.11June2020_v2.csv")
 

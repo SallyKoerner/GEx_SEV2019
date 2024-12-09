@@ -10,7 +10,8 @@ library(gridExtra)
 
 theme_set(theme_bw(12))
 
-setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
+#setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
+setwd("/Users/skoerne/Dropbox/GEx/GEx_VirtualWorkshop_June2020")
 
 ###making comp diff shoowsh figure
 comp<-read.csv("gex_multdiff_site_block.csv")
@@ -45,6 +46,7 @@ highlight<-gex_multdiff_CI2%>%
 shoosh<-
   ggplot(data=gex_multdiff_CI2, aes(x=site2, y=mean, color=as.factor(colortrt)))+
   geom_hline(yintercept=0.431, linetype="dashed")+
+  geom_hline(yintercept=0.176, linetype="dotted")+
   geom_point(aes(size=as.factor(size)))+
   scale_size_manual(values=c(1, 3.5))+
   scale_color_manual(values=c("black", "dodgerblue", "red", "orange"))+
@@ -183,4 +185,4 @@ examples<-grid.arrange(high, mid, low, ncol=1)
 
 figure1<-grid.arrange(shoosh, examples, ncol=2)
 
-ggsave("Figure1.jpg", figure1)
+ggsave("Figure1_Dec2024.jpg", figure1)
