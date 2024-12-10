@@ -3,12 +3,13 @@ library(codyn)
 library(rsq)
 library(ggthemes)
 
-setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
+#setwd("C:\\Users\\mavolio2\\Dropbox\\GEx_VirtualWorkshop_June2020\\")
+setwd("/Users/skoerne/Dropbox/GEx/GEx_VirtualWorkshop_June2020")
 comp_all<-read.csv("gex_multdiff_site_block.csv")
 comp<-read.csv("gex_multdiff_site_ave.csv")
 rac<-read.csv("gex_racdiff_site_ave.csv")
-experiment<-read.csv("Meta_SEV2019.csv")%>%
-  select(site, ANPP, PlotSize, domestic, dom, precip, Num_ex, grazing.pressure, Grazer_Domestic, herbivore.type, guild, sprich, X..herbivore.spp)
+experiment<-read.csv("Meta_SEV2019_v2_with_body_size.csv")%>%
+  select(site, ANPP, PlotSize, domestic, dom, precip, Num_ex, grazing.pressure, Grazer_Domestic, herbivore.type, guild, sprich, herbivore.spp)
 exage<-read.csv("All_Cleaned_April2019_V2.csv")%>%
   select(site, exage)%>%
   unique()
@@ -147,10 +148,10 @@ comp_bio<-merge(comp, experiment, by="site")%>%
   mutate(precip=as.numeric(as.character(precip)),
          anpp=as.numeric(as.character(ANPP)))
 
-summary(m1<-lm(composition_diff~precip+grazing.pressure+guild+X..herbivore.spp+dom+sprich, data=comp_bio))
+summary(m1<-lm(composition_diff~precip+grazing.pressure+guild+herbivore.spp+dom+sprich, data=comp_bio))
 rsq.partial(m1)
 
-summary(m1<-lm(composition_diff~anpp+grazing.pressure+guild+X..herbivore.spp+dom+sprich, data=comp_bio))
+summary(m1<-lm(composition_diff~anpp+grazing.pressure+guild+herbivore.spp+dom+sprich, data=comp_bio))
 rsq.partial(m1)
 
 comp_bio2<-comp_bio%>%
@@ -159,3 +160,4 @@ comp_bio2<-comp_bio%>%
 pairs(comp_bio[,c(2, 15, 6,13, 7,9, 12,14)], pch = 21, labels=c("Comp\nDiff", "ANPP", "Dominance", "Richness", "Precip", "Graze\nPressure", "Guild", "Herb\nRich"), font.labels=1, cex.labels=2,upper.panel=panel.cor)
 
 hist(comp_bio$grazing.pressure)
+
